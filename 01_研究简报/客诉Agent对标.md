@@ -62,3 +62,62 @@
 3. **8D 自动生成是"懂制造业"的最佳证明**，且是行业明确未充分解决的提效点。
 4. **全链路追溯（批次→工艺→供应商）是"制造业专属"而非"通用客服"的分水岭**。
 5. **差异化定位**：不做平台（那是灵核在做的事），做**一个"客诉处理"岗位的深度聚焦方案**——更具体、更可演示、更落地，正好契合"产品应用岗"而非"平台架构岗"的定位。
+
+---
+
+## 六、来源链接（逐条核验）
+
+> 核验时间：2026-08-19。以下链接均已用 HTTP 状态码 + 内容抽查验证。
+
+### 1. 灵核数智客诉闭环（核心对标）
+- **《让数字员工去工厂上班》**（公众号文章，ima 转存）
+  - 链接：https://ima.qq.com/wiki/?shareId=5d54533f99ca1b55760da05fa899edd4eb8f5bcfee5b91c01d5143b8b633f0f0
+  - ⚠️ 需登录腾讯 ima 查看。**含"客诉闭环"原话**、下单 Agent（3-4h→5-10分钟校验）、排产 Agent（30分钟给出建议）、"入口级/跟进级/业务分析级"三层 Agent 论
+
+### 2. 美的泰国工厂（行业标杆案例）
+- **《AI智能体进厂!"广东造"链起山海万里》**（搜狐/美云智数，2026 上半年）
+  - 链接：https://www.sohu.com/a/1044691855_119778
+  - ✅ 已验证页面含"客户投诉率下降32%""72个AI应用及13大智能体""VOC到VOP品质七步法""1200多万条质量问题专家库""几秒内客诉产线定位及根因分析""泰国工厂成品不合格率降低50%"
+
+### 3. 悦点科技（全链路追溯案例）
+- **《基于 Ontology 构建企业 Agent 根基》**（DataFunTalk 分享，2026-01-12）
+  - 链接：https://www.toutiao.com/article/7594427869737009715/
+  - ✅ 已验证原文含"一次客诉的全链路查询和分析往往需要投入 4 个人天的人力""一人驱动流程执行，并在 5 分钟内完成查询""客诉定位Agent/生产追溯Agent/供应链追溯Agent"
+
+### 4. 实在智能（质量追溯数字员工）
+- **《全价值链质量追溯：从成品到原料的快速反向追溯》**（实在智能）
+  - 链接：https://www.ai-indeed.com/encyclopedia/27948.html
+  - ✅ 已验证 200 可访问，含锂电巨头案例（MySQL+飞书多维表+Minitab 自动制图）、"人工2-3小时→分钟级"、跨系统闭环反馈
+- **《电商售后工单多，智能体能自动处理吗》**（实在智能）
+  - 链接：https://www.ai-indeed.com/encyclopedia/29772.html
+  - ✅ 已验证 200 可访问，含家电集团案例"投诉工单响应时长缩短80%""RPA非侵入式集成"
+
+### 5. 兔宝宝×售后宝（多 Agent VOC）
+- **《兔宝宝售后宝:多Agent组团"打工"》**（售后宝官网，2026-07-31）
+  - 链接：https://www.shb.ltd/corporate/news/2026/07/31/兔宝宝-售后宝-多Agent组团-打工-客诉100-闭环-客服人效翻倍/440
+  - ✅ 已验证 200 可访问，含"重大客诉100%闭环""智能VOC Agent实时预警""400热线/在线/微信多渠道扫描"
+
+### 6. 界方网络（机械制造案例）
+- **《机械制造企业——AI智能客服与工单自动化系统》**（界方网络）
+  - 链接：http://www.ntaiagent.com/case/20.html
+  - ✅ 已验证 200 可访问，含"售后响应时间缩短80%""工单录入效率提升90%""满意度82%→96%""年度售后人力成本节约30%"
+
+### 7. TailorTalk Pixels 案例（海外中小制造）
+- **《Pixels Case Study: AI and OCR Automate Manufacturing Service Requests》**（TailorTalk）
+  - 链接：https://tailortalk.ai/case-studies/pixels
+  - ✅ 已验证可访问（http 302 重定向至 https 版），含 WhatsApp 客服 Agent、OCR 保修验证、ERP 建单自动化
+
+### 8. Salesforce 制造业 Agentic AI
+- **《How Agentic AI Improves Customer Service and Support in Manufacturing》**（Quality Magazine）
+  - 链接：https://www.qualitymag.com/articles/99507-how-agentic-ai-improves-customer-service-and-support-in-manufacturing
+  - ⚠️ curl 返回 403（反爬），浏览器可直接访问。含 Endress+Hauser（4.75万/年案件）、Fisher & Paykel（通话时长12分钟→6分钟）
+
+### 9. Dify/Coze 低代码客诉工单案例
+- **《企业智能体构建：DIFY+COZE技术组合实战解析》**（CSDN 文库）
+  - 链接：https://wenku.csdn.net/column/jx72q8sw05k
+  - ✅ 已验证 200 可访问，含"工单平均响应48h→15分钟""RAG退货咨询准确率63%→92%"
+- **《低代码开发 AI Agent Harness Engineering》**（CSDN）
+  - 链接：https://blog.csdn.net/2501_92132293/article/details/160513955
+  - ✅ 已验证 200 可访问，含 Coze+Dify 混合架构、意图识别78%→94%、"客户咨询自动解决率65%、响应8秒"
+
+> **核验结论**：行业对标表内所有关键数据（美的32%、悦点4人天→5分钟、界方80%、兔宝宝100%闭环、Dify 48h→15分钟等）均有公开可访问来源。Salesforce 案例来源有反爬但浏览器可访问。灵核"客诉闭环"原话来源需登录 ima，引用时降级表述。
