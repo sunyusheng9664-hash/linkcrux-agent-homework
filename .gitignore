@@ -1,0 +1,11 @@
+.worktrees/
+node_modules/
+dist/
+offline-dist/
+coverage/
+cloudfunctions/*/dist/
+.env
+.env.*
+!.env.example
+playwright-report/
+test-results/

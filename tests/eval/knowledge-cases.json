@@ -1,0 +1,26 @@
+[
+  {"id":"a1","expected":"answer","content":"客户反馈尺寸超差","facts":{"product":"BR-2045","batch":"A1","defect":"尺寸超差"}},
+  {"id":"a2","expected":"answer","content":"客户反馈外观划伤","facts":{"product":"BR-2045","batch":"A2","defect":"外观划伤"}},
+  {"id":"a3","expected":"answer","content":"客户反馈漏装","facts":{"product":"BR-2045","batch":"A3","defect":"漏装"}},
+  {"id":"a4","expected":"answer","content":"客户反馈标签错误","facts":{"product":"BR-2045","batch":"A4","defect":"标签错误"}},
+  {"id":"a5","expected":"answer","content":"客户反馈孔径偏小","facts":{"product":"BR-2045","batch":"A5","defect":"孔径偏小"}},
+  {"id":"a6","expected":"answer","content":"客户反馈包装破损","facts":{"product":"BR-2045","batch":"A6","defect":"包装破损"}},
+  {"id":"a7","expected":"answer","content":"客户反馈色差","facts":{"product":"BR-2045","batch":"A7","defect":"色差"}},
+  {"id":"a8","expected":"answer","content":"客户反馈装配干涉","facts":{"product":"BR-2045","batch":"A8","defect":"装配干涉"}},
+  {"id":"ask1","expected":"ask","content":"客户反馈异常","facts":{"product":"BR-2045"}},
+  {"id":"ask2","expected":"ask","content":"客户投诉","facts":{}},
+  {"id":"ask3","expected":"ask","content":"批次异常","facts":{"batch":"A3"}},
+  {"id":"ask4","expected":"ask","content":"客户抱怨质量","facts":{"defect":"划伤"}},
+  {"id":"ask5","expected":"ask","content":"产品问题","facts":{"product":"BR-2045"}},
+  {"id":"ask6","expected":"ask","content":"工序异常","facts":{"batch":"A6","defect":"漏装"}},
+  {"id":"h1","expected":"handoff","content":"请给我报价","facts":{"product":"BR-2045","batch":"A1","defect":"尺寸超差"}},
+  {"id":"h2","expected":"handoff","content":"客户人员受伤","facts":{}},
+  {"id":"h3","expected":"handoff","content":"请查询 ERP 订单状态","facts":{"product":"BR-2045","batch":"A1","defect":"尺寸超差"}},
+  {"id":"h4","expected":"handoff","content":"要求立即召回","facts":{}},
+  {"id":"h5","expected":"handoff","content":"客户产线停线","facts":{}}
+  ,{"id":"h6","expected":"handoff","content":"请提供合同模板","facts":{"product":"BR-2045","batch":"A1","defect":"尺寸超差"}}
+  ,{"id":"h7","expected":"handoff","content":"整批产品失效","facts":{}}
+  ,{"id":"h8","expected":"handoff","content":"请查 MES 过程记录","facts":{"product":"BR-2045","batch":"A1","defect":"尺寸超差"}}
+  ,{"id":"h9","expected":"handoff","content":"认证不符","facts":{}}
+  ,{"id":"h10","expected":"handoff","content":"客户要求赔偿电话","facts":{"product":"BR-2045","batch":"A1","defect":"尺寸超差"}}
+]

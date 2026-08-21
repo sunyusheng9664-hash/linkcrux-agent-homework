@@ -34,7 +34,7 @@
 - Produces: item types `qa`, `procedure`, `rule`, `navigation`, `script`, `case`
 - Produces: `parseDocument(buffer, mimeType): Promise<string>`, `chunkText(text): KnowledgeChunkDraft[]`
 
-- [ ] **Step 1: 写 PDF/TXT/Markdown 解析、空文档拒绝和重叠分段失败测试**
+- [x] **Step 1: 写 PDF/TXT/Markdown 解析、空文档拒绝和重叠分段失败测试**
 
 ```ts
 expect(await parseDocument(Buffer.from('# SOP\n冻结库存'), 'text/markdown')).toContain('冻结库存')
@@ -42,22 +42,22 @@ await expect(parseDocument(Buffer.alloc(0), 'application/pdf')).rejects.toThrow(
 expect(chunkText(longText)[1].text).toContain(chunkText(longText)[0].text.slice(-120))
 ```
 
-- [ ] **Step 2: 运行失败测试**
+- [x] **Step 2: 运行失败测试**
 
 Run: `npm test -- cloudfunctions/agent-api/tests/documentParser.test.ts cloudfunctions/agent-api/tests/chunker.test.ts`  
 Expected: FAIL。
 
-- [ ] **Step 3: 实现受支持格式和有界分段**
+- [x] **Step 3: 实现受支持格式和有界分段**
 
 Run: `npm install pdf-parse minisearch`.
 
 限制 PDF/TXT/Markdown 和文本粘贴；拒绝加密 PDF、空文档和超过 2 MB 的文件。分段默认 800 字符、120 字符重叠，保存页码/标题/序号引用。
 
-- [ ] **Step 4: 实现 repository 与审核状态**
+- [x] **Step 4: 实现 repository 与审核状态**
 
 `documents`, `knowledge_chunks`, `knowledge_items` 支持 `draft`, `pending_review`, `published`, `expired`, `rejected`, `impacted`。只有 `published` 且当前时间在生效/失效区间内的条目可进入检索候选。
 
-- [ ] **Step 5: 验证并提交**
+- [x] **Step 5: 验证并提交**（CloudBase 持久化、云函数受信角色与在线 action 已接入；文本入库，文件上传界面留待 Task 5）
 
 Run: `npm test -- cloudfunctions/agent-api/tests && npm run typecheck`  
 Expected: PASS。
@@ -78,7 +78,7 @@ git commit -m "feat: add governed knowledge document model"
 - Produces: actions `knowledge.ingest`, `knowledge.review`, `knowledge.list`
 - Consumes: `KnowledgeItemSchema`
 
-- [ ] **Step 1: 写“自动生成不得直接发布”失败测试**
+- [x] **Step 1: 写“自动生成不得直接发布”失败测试**
 
 ```ts
 const result = await ingestKnowledge(deps, sopDocument)
@@ -86,20 +86,20 @@ expect(result.items.every((item) => item.status === 'pending_review')).toBe(true
 await expect(reviewItem(deps, item.id, 'published', viewerUser)).rejects.toThrow('FORBIDDEN')
 ```
 
-- [ ] **Step 2: 运行失败测试**
+- [x] **Step 2: 运行失败测试**
 
 Run: `npm test -- cloudfunctions/agent-api/tests/ingestKnowledge.test.ts cloudfunctions/agent-api/tests/reviewKnowledgeItem.test.ts`  
 Expected: FAIL。
 
-- [ ] **Step 3: 实现按知识类型生成候选条目**
+- [x] **Step 3: 实现按知识类型生成候选条目**
 
 Prompt 输出问答卡、步骤卡、条件/结论卡、导航卡、话术模板或案例卡，每条必须带 `sourceDocumentId`, `sourceChunkIds`, `owner`, `scope`, `visibility`, `effectiveAt`, `expiresAt`。
 
-- [ ] **Step 4: 实现审核、版本失效与影响传播**
+- [x] **Step 4: 实现审核、版本失效与影响传播**
 
 审批必须记录审核人和时间。替换或失效源文档时，其派生条目变为 `impacted` 并立即移出检索候选。
 
-- [ ] **Step 5: 验证并提交**
+- [x] **Step 5: 验证并提交**
 
 Run: `npm test -- cloudfunctions/agent-api/tests && npm run build:function`  
 Expected: PASS。
@@ -162,7 +162,7 @@ git commit -m "feat: add grounded enterprise knowledge answers"
 - Produces: `RoutingDecisionSchema`, `HandoffPacketSchema`
 - Produces: action `handoff.create`
 
-- [ ] **Step 1: 写范围外、高风险、信息不足、需系统查询和低命中测试**
+- [x] **Step 1: 写范围外、高风险、信息不足、需系统查询和低命中测试**
 
 ```ts
 expect(routeComplaint(priceInquiry)).toMatchObject({ decision: 'handoff', reason: 'OUT_OF_SCOPE' })
@@ -170,20 +170,20 @@ expect(routeComplaint(recallComplaint)).toMatchObject({ decision: 'urgent_handof
 expect(routeComplaint(batchUnknown)).toMatchObject({ decision: 'ask', missingFields: ['batch'] })
 ```
 
-- [ ] **Step 2: 运行失败测试**
+- [x] **Step 2: 运行失败测试**
 
 Run: `npm test -- src/domain/scopeRouter.test.ts cloudfunctions/agent-api/tests/complaintRouter.test.ts cloudfunctions/agent-api/tests/createHandoff.test.ts`  
 Expected: FAIL。
 
-- [ ] **Step 3: 实现“范围 → 高风险 → 可回答性”固定顺序**
+- [x] **Step 3: 实现“范围 → 高风险 → 可回答性”固定顺序**
 
 范围外推荐对应团队；高风险完成受理后立即升级；信息不足先有限追问；仍不足、需系统查询或低命中则转人工。
 
-- [ ] **Step 4: 实现可追溯接管包**
+- [x] **Step 4: 实现可追溯接管包**
 
 `HandoffPacket` 包含 `source`, `confirmedFacts`, `missingFields`, `riskSignals`, `searchedKnowledge`, `reason`, `suggestedTeam`, `sla`, `transitionReply`, `createdAt`，同时写入 `case_events`。
 
-- [ ] **Step 5: 验证并提交**
+- [x] **Step 5: 验证并提交**
 
 Run: `npm test && npm run typecheck`  
 Expected: PASS。

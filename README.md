@@ -26,23 +26,64 @@
 │   └── 客诉Agent对标.md   ← 行业玩家+差异化+数据锚点
 ├── 02_设计方案/
 │   └── 客诉Agent设计方案.md ← 核心交付物（主文档）
-├── 03_Demo/              ← 可演示网页（待完成）
-├── 04_交付物/            ← 正式文档+演示脚本（待完成）
+├── src/                  ← React 前端、CloudBase 客户端与本地验收 adapter
+├── cloudfunctions/       ← agent-api 云函数源码
+├── tests/e2e/            ← 面试官主流程浏览器验收
+├── scripts/              ← 本地质量门禁工具
 └── README.md             ← 本文件
-└── 进度说明.md            ← 给接棒 agent 的交接文档
 ```
 
 ---
 
-## 当前完成度
+## 当前实现边界
 
-| 阶段 | 状态 | 说明 |
-|------|------|------|
-| 研究简报 | ✅ 完成 | 三块 Deep Research 已沉淀 |
-| 设计方案 | ✅ 完成 | 已按"客户体验"主视角调整 |
-| Demo 网页 | ⏳ 待做 | 5 Tab 可演示网页 |
-| 演示脚本 | ⏳ 待做 | 面试走查话术 |
-| 正式交付物 | ⏳ 待做 | 文档润色+打包 |
+已经实现一条可运行的纵向流程：登录、录入客诉、结构化分析、事实/抽取/建议/缺失信息分层、质量经理接受/修改/驳回、受控知识核查（引用或转人工）、案件接管包、服务端生成 D1–D3 初版，以及 24h/14d/30d 交付时间表和 D4–D8 后续计划。在线代码使用 CloudBase 用户名认证、云函数、数据库、对象存储和服务端模型适配器；模型密钥不会进入浏览器代码。
+
+本仓库同时提供“本地验收模式 / Demo 模拟”，用于让评审者在没有 API Key、没有云环境时走完一次确定性的人工判断与知识核查。它与线上代码复用同一个 `AgentApi` 接口，但只接受内置案例和固定知识问题，分析、知识回答、接管包和处理包都是受控模拟值，页面全程有文字标识。它不能证明真实模型、CloudBase 登录、数据库、知识检索或部署环境已经通过验收。
+
+尚未在本任务内执行 CloudBase 部署、创建线上用户、配置真实模型密钥或发布公网地址。这些属于需要在控制台完成的部署检查点。
+
+## 本地验收
+
+需要 Node.js 20.19+ 或 22.12+。首次运行安装依赖后，执行：
+
+```bash
+npm ci
+npm run test:e2e
+```
+
+Playwright 会启动本地验收服务器并走完主流程。也可执行 `npm run dev:e2e` 后在浏览器打开 `http://127.0.0.1:4173`。本地 Demo 默认账号是 `linghe`，密码是 `shuzhi`；这组密码只由本地 Demo adapter 校验，不用于 CloudBase 生产登录。
+
+### 双击离线备用版
+
+在线地址是正式体验入口；如网络或云环境不可用，可构建无需 API Key 的离线备用包：
+
+```bash
+npm run build:offline
+```
+
+双击打开生成目录中的 `offline-dist/index.html`，用 `linghe / shuzhi` 登录即可完成内置案例的确定性演示。该文件将前端资源内联，可从 `file://` 打开；`npm run test:offline` 会在不启动本地 Web 服务的情况下验收这条路径。离线包只包含 Demo 模拟，不连接 CloudBase、模型、企业知识库或真实数据，不能用于实际客诉处理。
+
+`VITE_API_MODE=mock` 只可用于本地验收。生产构建检测到该变量会直接失败，避免把 Demo 逻辑或密码误带入交付产物。
+
+完整本地质量门禁：
+
+```bash
+npm run verify
+```
+
+该命令依次运行单元/组件测试、前后端类型检查、前端构建、云函数构建、本地 E2E 和密钥扫描。
+
+## 真实 CloudBase 运行检查点
+
+复制 `.env.example` 的变量名，在前端构建环境填写 `VITE_CLOUDBASE_ENV_ID`；在 CloudBase `agent-api` 云函数环境中填写 `LLM_BASE_URL`、`LLM_API_KEY`、`LLM_MODEL`，并把可发布知识条目的 CloudBase 用户 ID 填入 `KNOWLEDGE_OWNER_USER_IDS`。知识条目进入 `pending_review` 后，只有该服务端白名单中的用户可发布；客户端传入角色不会被信任。不要把真实值写入仓库、前端变量、数据库、日志或聊天。随后还需要在 CloudBase 控制台创建真实用户名用户、部署云函数和静态站点，并对部署地址另跑线上冒烟测试。
+
+连接已有 `cases` 集合前必须先备份并迁移旧数据，否则当前严格合同会拒绝读取：
+
+- 所有案件补齐正整数 `version`，并把 `status` 归一为 `intake`、`analyzed`、`confirmed` 或 `initial_pack`。
+- 有分析结果时，顶层 `analysisStatus` 必须存在并与 `analysis.analysisStatus` 一致；无分析结果时清理分析、人工判断和生成状态孤儿字段。
+- `confirmed` 必须同时具有分析和质量经理判断；`initial_pack` 必须具有处理包且 `initialPackStatus=generated`。
+- `initialPackStatus=generating` 必须具有有效 `initialPackGeneration` 租约；`initialPackStatus=manual_handoff` 必须具有受控失败原因。它们不是顶层 `status`。旧数据无法满足这些不变量时，应回退到最近一个证据完整的状态，而不是猜测补全。
 
 ---
 
@@ -65,6 +106,6 @@
 
 ---
 
-## 下一步（待接棒 agent 完成）
+## 设计与研究资料
 
-详见 [进度说明.md](./进度说明.md)
+行业研究、竞品分析、系统规格和示例 8D 报告位于 `01_研究简报/` 与 `02_设计方案/`。

@@ -1,0 +1,53 @@
+{
+  "name": "quality-complaint-agent",
+  "version": "1.0.0",
+  "description": "> 目标：杭州灵核数智产品应用岗面试作业 > 时间：2026-08-19 至 2026-08-21（周五交） > 定位：轻量但完整，体现 Agent 设计思路 + 产品方法论",
+  "scripts": {
+    "dev": "vite",
+    "dev:e2e": "VITE_API_MODE=mock vite --host 127.0.0.1 --port 4173",
+    "build": "tsc --noEmit && vite build",
+    "build:offline": "VITE_API_MODE=mock VITE_OFFLINE_DELIVERY=true vite build --mode offline --base ./ --outDir offline-dist && node scripts/inline-offline-assets.mjs offline-dist",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:offline": "npm run build:offline && playwright test -c playwright.offline.config.ts",
+    "test:eval": "vitest run tests/eval",
+    "typecheck": "tsc --noEmit && npm run typecheck:function",
+    "typecheck:function": "tsc --project cloudfunctions/agent-api/tsconfig.json --noEmit",
+    "build:function": "tsup cloudfunctions/agent-api/src/index.ts --platform node --format cjs --out-dir cloudfunctions/agent-api/dist",
+    "check:secrets": "node scripts/check-secrets.mjs",
+    "verify": "npm test && npm run typecheck && npm run build && npm run build:function && npm run test:e2e && npm run check:secrets"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "dependencies": {
+    "@cloudbase/js-sdk": "^3.8.0",
+    "@cloudbase/node-sdk": "^3.18.3",
+    "minisearch": "^7.2.0",
+    "pdf-parse": "^2.4.5",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-router-dom": "^7.18.2",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.5",
+    "@types/node": "^26.2.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.1.0",
+    "@vitest/coverage-v8": "3.2.7",
+    "jsdom": "^27.0.1",
+    "playwright": "^1.62.1",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vite": "^8.2.2",
+    "vitest": "3.2.7"
+  }
+}

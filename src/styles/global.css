@@ -1,0 +1,25 @@
+:root { font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif; color: #17212b; background: #f3f7f8; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+button, input, textarea, select { font: inherit; }
+button, .button { border: 0; border-radius: 6px; background: #075f63; color: #fff; cursor: pointer; padding: .7rem 1rem; text-decoration: none; display: inline-block; }
+button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, .button:focus-visible { outline: 3px solid #d5901c; outline-offset: 2px; }
+button:disabled { cursor: wait; opacity: .65; }
+.secondary { background: #e2ecec; color: #123f42; }
+.page, .auth-page { max-width: 880px; padding: 2rem 1rem; margin: auto; }
+.auth-page { max-width: 440px; padding-top: 10vh; }
+.panel { background: #fff; border: 1px solid #d9e2e4; border-radius: 10px; padding: 1.5rem; margin-top: 1rem; box-shadow: 0 1px 2px #0000000d; }
+.form { display: grid; gap: .65rem; }
+textarea, input, select { border: 1px solid #829093; border-radius: 5px; padding: .65rem; width: 100%; background: #fff; }
+.hint { color: #526165; font-size: .9rem; margin: 0; }
+.demo-notice { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem 1rem; padding: .7rem 1rem; background: #fff0d7; border-bottom: 1px solid #d7b979; color: #6c4709; }
+.actions { display: flex; flex-wrap: wrap; gap: .75rem; }
+[role="alert"] { color: #a4271b; font-weight: 600; margin: 0; }
+.evidence-tag { display: inline-block; border-radius: 999px; padding: .15rem .5rem; margin-right: .35rem; background: #e8eef0; color: #344448; font-size: .78rem; font-weight: 700; }
+.evidence-tag--verified, .evidence-tag--confirmed { background: #daf0e6; color: #135b42; }
+.evidence-tag--extracted, .evidence-tag--suggested { background: #e4ebfa; color: #284b84; }
+.evidence-tag--missing { background: #fff0d7; color: #83520a; }
+.card-list { display: grid; gap: .75rem; padding-left: 1.25rem; }
+dl > div { display: grid; grid-template-columns: minmax(5rem, 8rem) 1fr; gap: .75rem; margin: .35rem 0; }
+dt { font-weight: 700; }
+dd { margin: 0; }
