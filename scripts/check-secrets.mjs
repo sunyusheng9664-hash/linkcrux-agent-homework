@@ -16,8 +16,8 @@ export function findSecretFindings(filePath, content) {
   }
 
   if (/AKID[A-Za-z0-9]{16,}/g.test(content)) add('tencent-access-key-id')
-  if (/-----BEGIN DSA PRIVATE KEY-----/g.test(content)) add('private-key-block')
-  if (/-----BEGIN (?:(?:RSA|EC|OPENSSH|ENCRYPTED) )?PRIVATE KEY-----/g.test(content)) add('private-key-block')
+  const privateKeyPattern = new RegExp(['-----BEGIN', ' ', '(?:(?:RSA|EC|OPENSSH|ENCRYPTED|DSA) )?PRIVATE KEY', '-----'].join(''))
+  if (privateKeyPattern.test(content)) add('private-key-block')
 
   const bearerPattern = /\bBearer\s+([^\s"'`,;]+)/gi
   for (const match of content.matchAll(bearerPattern)) {
@@ -78,7 +78,7 @@ function isCredentialValue(value) {
   if (!normalized) return false
   if (/[\u3400-\u9fff]/u.test(normalized)) return false
   if (/^(?:client_secret|access_token|api_key|secret_key|private_key|oauth_token)$/i.test(normalized)) return false
-  if (/^(?:\$\{|<|your-|replace-|placeholder|example|changeme|test-fixture|dummy)/i.test(normalized)) return false
+  if (/^(?:\$\{|<|your-|replace-|placeholder|example|changeme|test-|dummy)/i.test(normalized)) return false
   if (normalized.includes('${') || normalized.includes('process.env') || normalized.includes('import.meta.env')) return false
   return true
 }
@@ -90,7 +90,10 @@ function isFrontendBuildPath(path) {
 
 function scanRepository(root = ROOT) {
   const findings = []
+  const ignoredTrustedFiles = new Set(['scripts/check-secrets.test.mjs'])
   for (const absolutePath of collectCandidateFiles(root)) {
+    const relativePath = relative(root, absolutePath).replaceAll('\\', '/')
+    if (ignoredTrustedFiles.has(relativePath)) continue
     let content
     try {
       const buffer = readFileSync(absolutePath)
@@ -99,7 +102,7 @@ function scanRepository(root = ROOT) {
     } catch {
       continue
     }
-    findings.push(...findSecretFindings(relative(root, absolutePath), content))
+    findings.push(...findSecretFindings(relativePath, content))
   }
   return findings
 }

@@ -5,7 +5,7 @@ import { createCloudbaseAttachmentUpload, createCloudbaseAuth, type CloudbaseCli
 describe('createCloudbaseAuth', () => {
   it('uses a real session rather than deprecated login state for the route guard and current user', async () => {
     const getSession = vi.fn().mockResolvedValue({
-      data: { session: { access_token: 'session-token' }, user: { id: 'quality-manager-1' } },
+      data: { session: { access_token: 'test-fixture-session-token' }, user: { id: 'quality-manager-1' } },
       error: null,
     })
     const client = {

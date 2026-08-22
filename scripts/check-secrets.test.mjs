@@ -41,6 +41,7 @@ describe('secret scanner', () => {
   it('allows documented placeholders, variable names and inert test fragments', () => {
     const safe = [
       'LLM_API_KEY=replace-in-cloudbase-console',
+      'LLM_API_KEY=test-api-key',
       'LLM_BASE_URL=https://your-provider.example/v1',
       'VITE_CLOUDBASE_ENV_ID=your-cloudbase-env-id',
       'const apiKeyName = "LLM_API_KEY"',
@@ -50,6 +51,7 @@ describe('secret scanner', () => {
 
     expect(findSecretFindings('.env.example', safe)).toEqual([])
     expect(findSecretFindings('safe.json', '{"LLM_API_KEY":"replace-in-cloudbase-console"}')).toEqual([])
+    expect(findSecretFindings('safe.json', '{"access_token":"test-fixture-session-token"}')).toEqual([])
     expect(findSecretFindings('dist/assets/vendor.js', 'const config={API_KEY:runtimeConfig.apiKey}')).toEqual([])
     const openAiKey = ['OPENAI', 'API', 'KEY'].join('_')
     expect(findSecretFindings('safe.env', `${openAiKey}=\${${openAiKey}}`)).toEqual([])

@@ -54,14 +54,13 @@ function citation(hit: SearchHit): KnowledgeAnswer['citations'][number] {
   return { itemId: hit.item.id, documentId: hit.citation.documentId, documentName: hit.citation.documentName, version: hit.citation.version, chunkIds: hit.citation.chunks.map((chunk) => chunk.id) }
 }
 function referenceText(hit: SearchHit): string {
-  const { content } = hit.item
   switch (hit.item.type) {
-    case 'qa': return content.answer
-    case 'procedure': return content.steps.map((step, index) => `${index + 1}. ${step}`).join('；')
-    case 'rule': return `适用条件：${content.when}；要求：${content.then}`
-    case 'navigation': return `${content.system}：${content.path.join(' → ')}`
-    case 'script': return `${content.scenario}：${content.script}`
-    case 'case': return `${content.summary}；经验：${content.lessons.join('；')}`
+    case 'qa': return hit.item.content.answer
+    case 'procedure': return hit.item.content.steps.map((step, index) => `${index + 1}. ${step}`).join('；')
+    case 'rule': return `适用条件：${hit.item.content.when}；要求：${hit.item.content.then}`
+    case 'navigation': return `${hit.item.content.system}：${hit.item.content.path.join(' → ')}`
+    case 'script': return `${hit.item.content.scenario}：${hit.item.content.script}`
+    case 'case': return `${hit.item.content.summary}；经验：${hit.item.content.lessons.join('；')}`
   }
 }
 function handoff(reason: NonNullable<KnowledgeAnswer['reason']>): KnowledgeAnswer { return { decision: 'handoff', answer: null, citations: [], missingInformation: [], reason } }
