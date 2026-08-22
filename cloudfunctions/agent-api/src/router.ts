@@ -11,6 +11,9 @@ import {
   type InitialPack,
 } from '../../../src/contracts/case'
 import { KnowledgeConfidentialitySchema, KnowledgeScopeSchema, KnowledgeSourceTypeSchema, KnowledgeVisibilitySchema } from '../../../src/contracts/knowledge'
+import { advanceCase } from './actions/advanceCase'
+import { closeCase } from './actions/closeCase'
+import { generateKnowledgeCard } from './actions/generateKnowledgeCard'
 import type { InitialPackSource } from './actions/generateInitialPack'
 import type { IngestKnowledgeInput } from './actions/ingestKnowledge'
 import type { KnowledgeAnswer } from './actions/answerKnowledge'
@@ -25,6 +28,17 @@ const CaseIdPayloadSchema = z.object({ id: z.string().min(1) }).strict()
 const GenerateInitialPackPayloadSchema = CaseIdPayloadSchema.extend({ retry: z.boolean().default(false) }).strict()
 const ConfirmPayloadSchema = CaseIdPayloadSchema.extend({
   decision: ManagerDecisionSchema,
+}).strict()
+const AdvanceCasePayloadSchema = z.object({
+  id: z.string().min(1),
+  stage: z.enum(['containment', 'root_cause', 'corrective', 'customer_confirm']),
+  rootCause: z.string().trim().min(1).optional(),
+  containmentEvidence: z.array(z.string().trim().min(1)).max(50).optional(),
+  correctiveAction: z.string().trim().min(1).optional(),
+  correctiveVerification: z.string().trim().min(1).optional(),
+  customerAccepted: z.boolean().optional(),
+  customerFeedback: z.string().trim().optional(),
+  unresolvedHighRisks: z.number().int().nonnegative().optional(),
 }).strict()
 const KnowledgeIngestPayloadSchema = z.object({
   name: z.string().trim().min(1),
@@ -86,6 +100,18 @@ export async function route(request: z.input<typeof ApiRequestSchema>, context: 
     case 'cases.generateInitialPack': {
       const { id, retry } = GenerateInitialPackPayloadSchema.parse(parsedRequest.payload)
       return generateCaseInitialPack(id, userId, retry, deps)
+    }
+    case 'cases.advance': {
+      const payload = AdvanceCasePayloadSchema.parse(parsedRequest.payload)
+      const { id, ...input } = payload
+      return success(await advanceCase(deps.caseRepository, id, userId, input))
+    }
+    case 'cases.close': {
+      return success(await closeCase(deps.caseRepository, CaseIdPayloadSchema.parse(parsedRequest.payload).id, userId))
+    }
+    case 'cases.generateKnowledgeCard': {
+      if (!deps.knowledgeRepository) throw new Error('KNOWLEDGE_UNAVAILABLE')
+      return success(await generateKnowledgeCard({ caseRepository: deps.caseRepository, knowledgeRepository: deps.knowledgeRepository }, CaseIdPayloadSchema.parse(parsedRequest.payload).id, userId))
     }
     case 'knowledge.ingest': {
       if (!deps.ingestKnowledge) throw new Error('KNOWLEDGE_UNAVAILABLE')

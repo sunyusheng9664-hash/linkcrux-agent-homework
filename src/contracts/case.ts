@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+import { CaseWorkflowSchema } from './workflow'
+
 export const CaseFactFieldSchema = z.enum([
   'customer',
   'product',
@@ -214,6 +216,7 @@ export const CaseRecordSchema = z.object({
   initialPackStatus: InitialPackStatusSchema.optional(),
   initialPackFailureReason: InitialPackFailureReasonSchema.optional(),
   initialPackGeneration: InitialPackGenerationSchema.optional(),
+  workflow: CaseWorkflowSchema.optional(),
 }).strict().superRefine((record, context) => {
   const issue = (path: string, message: string) => context.addIssue({ code: 'custom', path: [path], message })
   if (Boolean(record.analysis) !== Boolean(record.analysisStatus) || (record.analysis && record.analysisStatus !== record.analysis.analysisStatus)) {

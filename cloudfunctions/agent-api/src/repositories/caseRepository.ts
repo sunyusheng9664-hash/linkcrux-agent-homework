@@ -16,13 +16,14 @@ import {
 } from '../../../../src/contracts/case'
 import type { z } from 'zod'
 import { HandoffPacketSchema, type HandoffPacket } from '../../../../src/contracts/handoff'
+import { CaseWorkflowSchema } from '../../../../src/contracts/workflow'
 
 export type { CaseRecord, ManagerDecision }
 
 export type CaseCreateInput = z.input<typeof ComplaintInputSchema>
 export type CaseUpdate = Partial<Pick<CaseRecord,
   'status' | 'analysis' | 'analysisStatus' | 'managerDecision' | 'initialPack' |
-  'initialPackStatus' | 'initialPackFailureReason' | 'initialPackGeneration'
+  'initialPackStatus' | 'initialPackFailureReason' | 'initialPackGeneration' | 'workflow'
 >> & {
   clearInitialPackFailureReason?: boolean
   clearInitialPackGeneration?: boolean
@@ -224,6 +225,7 @@ function validateUpdate(patch: CaseUpdate): CaseUpdate {
   if (patch.initialPackGeneration) result.initialPackGeneration = InitialPackGenerationSchema.parse(patch.initialPackGeneration)
   if (patch.clearInitialPackFailureReason) result.clearInitialPackFailureReason = true
   if (patch.clearInitialPackGeneration) result.clearInitialPackGeneration = true
+  if (patch.workflow) result.workflow = CaseWorkflowSchema.parse(patch.workflow)
   return result
 }
 
