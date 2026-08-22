@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import type { CaseFactField, CaseRecord } from '../../contracts/case'
-import { LOCAL_DEMO_COMPLAINT_CONTENT } from '../../demo/mainComplaint'
+import { LOCAL_DEMO_COMPLAINT_EXAMPLES } from '../../demo/mainComplaint'
 import { CASE_FLOW_STEPS, caseProgressCompleted, caseStatusMeta, factLabel, formatCaseNumber, formatDateTime } from '../../domain/presentation'
 import type { AgentApi } from '../../services/agentApi'
 
@@ -78,7 +78,7 @@ function CaseSummary({ record }: { record: CaseRecord }) {
   const completed = caseProgressCompleted(record)
   const missingFields = record.analysis?.missingFields ?? []
   const risk = record.analysis?.riskSuggestion[0]
-  const source = record.content === LOCAL_DEMO_COMPLAINT_CONTENT ? '示例' : '录入'
+  const source = LOCAL_DEMO_COMPLAINT_EXAMPLES.includes(record.content as typeof LOCAL_DEMO_COMPLAINT_EXAMPLES[number]) ? '示例' : '录入'
   return <li className="panel case-card">
     <div className="case-card__head">
       <span className="case-number">{formatCaseNumber(record.id)}</span>
@@ -102,7 +102,7 @@ function CaseSummary({ record }: { record: CaseRecord }) {
 function buildCaseTitle(facts: Partial<Record<CaseFactField, string>>, content: string): string {
   const customer = facts.customer
   const product = facts.product
-  if (customer && product) return `${customer} · ${product}`
+  if (customer && product) return `${customer}｜${product}`
   if (customer || product) return customer || product || ''
   return excerpt(content)
 }

@@ -44,6 +44,17 @@ export function EightDInitialView({
   const [replyConfirmed, setReplyConfirmed] = useState(false)
   const [versionConfirmed, setVersionConfirmed] = useState(false)
   const [tasks, setTasks] = useState<Record<number, TaskState>>({})
+  const [copiedKey, setCopiedKey] = useState<'header' | 'section' | null>(null)
+
+  async function handleCopy(key: 'header' | 'section', text: string) {
+    try {
+      await Promise.resolve(copy(text))
+      setCopiedKey(key)
+      window.setTimeout(() => setCopiedKey((current) => current === key ? null : current), 2000)
+    } catch {
+      // 复制失败时静默；浏览器未授权 clipboard 时不打扰用户
+    }
+  }
 
   function task(index: number): TaskState {
     return tasks[index] ?? { decision: undefined, owner: pack.d3.containmentActions[index].owner, due: pack.d3.containmentActions[index].dueAt, executed: false, evidence: '' }
@@ -92,7 +103,9 @@ export function EightDInitialView({
         {versionConfirmed
           ? <span className="status-badge status-badge--success">✓ 质量经理已确认 v1</span>
           : <button type="button" className="secondary" onClick={() => setVersionConfirmed(true)}>确认版本 v1</button>}
-        <button type="button" className="secondary" onClick={() => void copy(reply)}>复制客户回复</button>
+        <button type="button" className="secondary" onClick={() => void handleCopy('header', reply)}>
+          {copiedKey === 'header' ? '✓ 已复制客户回复' : '复制客户回复'}
+        </button>
         <button type="button" className="secondary" onClick={exportPack}>导出 8D 初版</button>
       </div>
     </header>
@@ -103,7 +116,9 @@ export function EightDInitialView({
       {managerDecision?.outcome === 'modified' && <p className="hint">质量经理已修改 Agent 建议，回复内容需与最终判断一致。</p>}
       <textarea aria-label="客户回复草稿" value={reply} onChange={(event) => setReply(event.target.value)} rows={5} />
       <div className="actions">
-        <button type="button" className="secondary" onClick={() => void copy(reply)}>复制回复</button>
+        <button type="button" className="secondary" onClick={() => void handleCopy('section', reply)}>
+          {copiedKey === 'section' ? '✓ 已复制' : '复制回复'}
+        </button>
         <button type="button" className={replyConfirmed ? '' : 'secondary'} onClick={() => setReplyConfirmed((current) => !current)}>
           {replyConfirmed ? '已确认待发送 ✓' : '确认并待发送'}
         </button>

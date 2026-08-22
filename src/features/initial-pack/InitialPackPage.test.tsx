@@ -35,11 +35,11 @@ describe('InitialPackPage', () => {
 
     render(<MemoryRouter initialEntries={['/cases/case-1/initial-pack']}><Routes><Route path="/cases/:id/initial-pack" element={<InitialPackPage api={api as Pick<AgentApi, 'getCase' | 'generateInitialPack'>} />} /></Routes></MemoryRouter>)
 
-    expect(await screen.findByText('首次处理包需要人工接管')).toBeVisible()
+    expect(await screen.findByText(/首次处理包.*需要人工接管/)).toBeVisible()
     expect(screen.getByText('原因：D3 建议包含不允许的完成态或结论态')).toBeVisible()
     expect(generateInitialPack).not.toHaveBeenCalled()
 
-    await userEvent.click(screen.getByRole('button', { name: '人工确认后重试' }))
+    await userEvent.click(screen.getByRole('button', { name: '重新生成' }))
     await waitFor(() => expect(generateInitialPack).toHaveBeenCalledWith('case-1', { retry: true }))
     expect(await screen.findByRole('heading', { name: '8D 初版' })).toBeVisible()
   })

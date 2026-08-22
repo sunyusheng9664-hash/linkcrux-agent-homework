@@ -7,7 +7,7 @@ import {
   type InitialPack,
   type ManagerDecision,
 } from '../contracts/case'
-import { LOCAL_DEMO_COMPLAINT_CONTENT } from '../demo/mainComplaint'
+import { LOCAL_DEMO_COMPLAINT_EXAMPLES } from '../demo/mainComplaint'
 import type { AgentApi } from './agentApi'
 import type { AttachmentUpload, AuthService } from './cloudbase'
 
@@ -41,7 +41,7 @@ export function createLocalDemoServices(storage: Storage = window.localStorage):
   const api: AgentApi = {
     async createCase(rawInput) {
       const input = ComplaintInputSchema.parse(rawInput)
-      if (input.content !== LOCAL_DEMO_COMPLAINT_CONTENT || input.attachments.length > 0) {
+      if (!LOCAL_DEMO_COMPLAINT_EXAMPLES.includes(input.content as typeof LOCAL_DEMO_COMPLAINT_EXAMPLES[number]) || input.attachments.length > 0) {
         throw new Error('LOCAL_DEMO_PRESET_ONLY')
       }
       const record = CaseRecordSchema.parse({

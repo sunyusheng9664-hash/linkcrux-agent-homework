@@ -31,13 +31,14 @@ export function KnowledgeUploadForm({ api }: { api: { ingestKnowledge(input: Rec
   const [text, setText] = useState('')
   const [name, setName] = useState('')
   const [category, setCategory] = useState<KnowledgeCategory>('sop')
-  const [version, setVersion] = useState('')
-  const [customers, setCustomers] = useState('')
-  const [products, setProducts] = useState('')
-  const [factories, setFactories] = useState('')
+  const [version, setVersion] = useState('v1')
+  // 必填 / 必选项给一组合理默认值，让面试官一键即可生成；按需再改。
+  const [customers, setCustomers] = useState('华东精工')
+  const [products, setProducts] = useState('BR-2045')
+  const [factories, setFactories] = useState('杭州一厂')
   const [visibility, setVisibility] = useState<'quality_team' | 'quality_manager' | 'knowledge_owner'>('quality_team')
-  const [effectiveDate, setEffectiveDate] = useState('')
-  const [expiresDate, setExpiresDate] = useState('')
+  const [effectiveDate, setEffectiveDate] = useState(() => formatDateInput(new Date()))
+  const [expiresDate, setExpiresDate] = useState(() => formatDateInput(new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)))
   const [confidentiality, setConfidentiality] = useState<'internal' | 'confidential'>('internal')
   const [fileStatus, setFileStatus] = useState<string>()
   const [isExample, setIsExample] = useState(false)
@@ -52,6 +53,7 @@ export function KnowledgeUploadForm({ api }: { api: { ingestKnowledge(input: Rec
     setText(EXAMPLE_FIXTURE.text)
     setIsExample(true)
     setFileStatus(undefined)
+    // 适用范围与有效期保留页面默认值；面试官可一键提交，不必逐项填写。
   }
 
   async function selectFile(file: File | undefined) {
@@ -71,7 +73,7 @@ export function KnowledgeUploadForm({ api }: { api: { ingestKnowledge(input: Rec
       return
     }
     if (isServerParsed) {
-      setFileStatus(`${file.name} 为 ${file.name.split('.').pop()?.toUpperCase()} 格式，需部署后由服务端解析。本地模式请粘贴文本或上传 TXT/Markdown。`)
+      setFileStatus(`${file.name} 为 ${file.name.split('.').pop()?.toUpperCase()} 格式，需由部署后的服务端解析。本地模式请粘贴文本或上传 TXT/Markdown。`)
       return
     }
     setFileStatus(`不支持 ${file.name} 的格式，请使用 TXT/Markdown 或直接粘贴文本。`)
@@ -124,7 +126,7 @@ export function KnowledgeUploadForm({ api }: { api: { ingestKnowledge(input: Rec
       <textarea id="knowledge-text" value={text} onChange={(event) => { setText(event.target.value); setIsExample(false) }} required rows={8} />
 
       <fieldset className="governance-fields">
-        <legend>适用范围与权限（提交前必配）</legend>
+        <legend>适用范围与权限（已填入常用默认值，可直接提交或按需修改）</legend>
         <div className="knowledge-section">
           <h3 className="knowledge-section__title">适用范围</h3>
           <label htmlFor="knowledge-customers">适用客户（逗号分隔，可空表示不限）</label>
@@ -165,6 +167,11 @@ export function KnowledgeUploadForm({ api }: { api: { ingestKnowledge(input: Rec
 
 function splitList(value: string): string[] {
   return value.split(/[,，]/).map((item) => item.trim()).filter(Boolean)
+}
+
+function formatDateInput(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 }
 
 

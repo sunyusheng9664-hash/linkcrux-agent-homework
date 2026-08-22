@@ -64,10 +64,11 @@ describe('WorkbenchPage', () => {
   it('leads the interviewer with a single guided example entry and explains the 1-4 experience flow', async () => {
     renderWorkbench(vi.fn().mockResolvedValue([]))
 
-    expect(await screen.findByRole('heading', { name: '推荐体验：5 分钟走完一条客诉' })).toBeVisible()
-    expect(screen.getByRole('link', { name: '开始 5 分钟示例体验' })).toHaveAttribute('href', '/cases/new?preset=main')
+    expect(await screen.findByRole('heading', { name: '5 分钟体验一次完整客诉闭环' })).toBeVisible()
+    const exampleLinks = screen.getAllByRole('link', { name: '开始示例体验' })
+    expect(exampleLinks[0]).toHaveAttribute('href', '/cases/new?preset=main')
     const guide = screen.getByLabelText('示例体验步骤')
-    expect(guide).toHaveTextContent('1受理2Agent 分析3人工判断4首次处理包')
+    expect(guide).toHaveTextContent('1受理投诉2Agent 分析3质量经理确认4生成处理包')
     expect(screen.getByRole('link', { name: '新建真实客诉' })).toHaveAttribute('href', '/cases/new')
   })
 
@@ -98,8 +99,10 @@ describe('WorkbenchPage', () => {
 
   it('shows an honest empty state only after the case query completes', async () => {
     renderWorkbench(vi.fn().mockResolvedValue([]))
-    expect(await screen.findByText('当前还没有客诉案件。')).toBeVisible()
-    expect(screen.getByRole('link', { name: '开始示例体验' })).toHaveAttribute('href', '/cases/new?preset=main')
+    expect(await screen.findByText(/还没有客诉案件/)).toBeVisible()
+    // 主 CTA 与空状态 CTA 同名时，按主 CTA 校验跳转目标
+    const exampleLinks = screen.getAllByRole('link', { name: '开始示例体验' })
+    expect(exampleLinks[0]).toHaveAttribute('href', '/cases/new?preset=main')
   })
 
   it('shows a readable error when the case query fails', async () => {

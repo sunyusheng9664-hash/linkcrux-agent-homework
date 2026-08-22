@@ -2,7 +2,7 @@ import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
 import type { Attachment } from '../../contracts/case'
-import { LOCAL_DEMO_COMPLAINT_CONTENT } from '../../demo/mainComplaint'
+import { LOCAL_DEMO_COMPLAINT_EXAMPLES } from '../../demo/mainComplaint'
 import { CASE_ENTRY_STEPS, formatFileSize } from '../../domain/presentation'
 import { validateImageAttachment } from '../../services/attachments'
 import type { AgentApi } from '../../services/agentApi'
@@ -12,12 +12,19 @@ export function NewCasePage({ api, uploadAttachment, onCreated }: { api: Pick<Ag
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const isExample = searchParams.get('preset') === 'main'
-  const [content, setContent] = useState(isExample ? LOCAL_DEMO_COMPLAINT_CONTENT : '')
+  const [content, setContent] = useState(isExample ? LOCAL_DEMO_COMPLAINT_EXAMPLES[0] : '')
+  const [exampleIndex, setExampleIndex] = useState(isExample ? 0 : -1)
   const [file, setFile] = useState<File>()
   const [error, setError] = useState<string>()
   const [submitting, setSubmitting] = useState(false)
 
-  const exampleLoaded = isExample && content === LOCAL_DEMO_COMPLAINT_CONTENT
+  const exampleLoaded = LOCAL_DEMO_COMPLAINT_EXAMPLES.includes(content as typeof LOCAL_DEMO_COMPLAINT_EXAMPLES[number])
+
+  function loadNextExample() {
+    const next = exampleIndex < 0 ? 0 : (exampleIndex + 1) % LOCAL_DEMO_COMPLAINT_EXAMPLES.length
+    setExampleIndex(next)
+    setContent(LOCAL_DEMO_COMPLAINT_EXAMPLES[next])
+  }
 
   function selectFile(event: ChangeEvent<HTMLInputElement>) {
     const selected = event.target.files?.[0]
@@ -72,12 +79,15 @@ export function NewCasePage({ api, uploadAttachment, onCreated }: { api: Pick<Ag
     <form className="panel form" onSubmit={submit} noValidate>
       <div className="field-head">
         <label htmlFor="complaint-content">客诉内容</label>
-        {isExample && <span className="demo-badge">示例已载入 · 演示数据</span>}
+      {isExample && <span className="demo-badge">示例已载入 · 演示数据</span>}
       </div>
       <textarea id="complaint-content" value={content} onChange={(event) => setContent(event.target.value)} aria-describedby={error ? 'case-error' : undefined} rows={8} />
-      {isExample
-        ? <button type="button" className="secondary" disabled={exampleLoaded} onClick={() => setContent(LOCAL_DEMO_COMPLAINT_CONTENT)}>↺ 重置为示例内容</button>
-        : <button type="button" className="secondary" onClick={() => setContent(LOCAL_DEMO_COMPLAINT_CONTENT)}>🧪 载入示例投诉</button>}
+      <div className="example-bar">
+        <button type="button" className="secondary" onClick={loadNextExample}>
+          {exampleLoaded ? `🧪 切换下一个示例（${exampleIndex + 1}/${LOCAL_DEMO_COMPLAINT_EXAMPLES.length}）` : '🧪 载入示例投诉'}
+        </button>
+        {exampleLoaded && <span className="hint">当前为第 {exampleIndex + 1} 个内置示例，共 {LOCAL_DEMO_COMPLAINT_EXAMPLES.length} 个；点击按钮可循环切换。</span>}
+      </div>
 
       <label htmlFor="image-attachment">图片附件</label>
       <input id="image-attachment" type="file" accept="image/jpeg,image/png,image/gif,image/webp" onChange={selectFile} />
@@ -88,7 +98,7 @@ export function NewCasePage({ api, uploadAttachment, onCreated }: { api: Pick<Ag
       <section className="expectation" aria-label="提交后会发生什么">
         <h3>提交后 Agent 将</h3>
         <ul>
-          <li>① 抽取关键事实：客户、产品、批次、缺陷、影响等</li>
+          <li>① 抽取关键事实：客户、产品、批次、缺陷、数量、影响、客户诉求</li>
           <li>② 评估风险并标出缺失信息</li>
           <li>③ 给出处理建议与 SLA 提示</li>
         </ul>

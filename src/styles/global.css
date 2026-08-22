@@ -117,6 +117,8 @@ dd { margin: 0; }
 /* ===== 表单增强 ===== */
 .field-head { display: flex; align-items: center; gap: .6rem; }
 .demo-badge { display: inline-block; padding: .15rem .55rem; border-radius: 999px; background: #fff0d7; color: #83520a; font-size: .78rem; font-weight: 700; }
+.example-bar { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; margin: .4rem 0 .75rem; }
+.example-bar .hint { margin: 0; font-size: .82rem; }
 .expectation { margin-top: .5rem; padding: .8rem .9rem; border-radius: 8px; background: #f0f6f6; border: 1px dashed #9db9ba; }
 .expectation h3 { margin: 0 0 .4rem; font-size: .95rem; color: #123f42; }
 .expectation ul { margin: 0; padding-left: 1.2rem; color: #344448; font-size: .9rem; }

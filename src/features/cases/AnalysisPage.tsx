@@ -106,7 +106,10 @@ export function AnalysisPage({ api }: { api: Pick<AgentApi, 'getCase' | 'analyze
     <section className="panel" aria-labelledby="agent-analysis-heading">
       <h2 id="agent-analysis-heading">Agent 分析建议</h2>
       {analysis.analysisStatus === 'manual_takeover'
-        ? <p className="risk-banner" role="note">当前案件触发高风险或敏感规则，已转质量经理人工处理。Agent 建议仅作参考。</p>
+        ? <>
+          <p>分析状态：人工接管</p>
+          <p className="risk-banner" role="note">当前案件触发高风险或敏感规则，已转质量经理人工处理。Agent 建议仅作参考。</p>
+        </>
         : <p>分析状态：Agent 已完成分析</p>}
       {analysis.analysisFailureReason && <p>失败原因：{ANALYSIS_FAILURE_LABELS[analysis.analysisFailureReason]}</p>}
       <h3><EvidenceTag kind="extracted" /> 结构化事实</h3>

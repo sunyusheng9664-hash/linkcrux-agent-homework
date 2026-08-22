@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes, useSearchParams } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { LOCAL_DEMO_COMPLAINT_CONTENT } from '../../demo/mainComplaint'
+import { LOCAL_DEMO_COMPLAINT_EXAMPLES } from '../../demo/mainComplaint'
 import { NewCasePage } from './NewCasePage'
 
 function renderPage(props: React.ComponentProps<typeof NewCasePage>, path = '/cases/new') {
@@ -89,12 +89,25 @@ describe('NewCasePage', () => {
     renderPage({ api, uploadAttachment: vi.fn() }, '/cases/new?preset=main')
 
     expect(screen.getByText('示例已载入 · 演示数据')).toBeVisible()
-    expect(screen.getByLabelText('客诉内容')).toHaveValue(LOCAL_DEMO_COMPLAINT_CONTENT)
-    const restore = screen.getByRole('button', { name: '恢复示例原文' })
-    expect(restore).toBeDisabled()
-    expect(screen.getByLabelText('处理流程')).toHaveTextContent('1录入2Agent 分析3人工判断4首次处理包')
+    expect(screen.getByLabelText('客诉内容')).toHaveValue(LOCAL_DEMO_COMPLAINT_EXAMPLES[0])
+    expect(screen.getByRole('button', { name: /切换下一个示例.*1\/5/ })).toBeVisible()
+    expect(screen.getByLabelText('处理流程')).toHaveTextContent('1录入投诉2Agent 分析3质量经理确认4生成处理包')
     expect(screen.getByRole('link', { name: '工作台' })).toHaveAttribute('href', '/')
     expect(screen.getByLabelText('提交后会发生什么')).toHaveTextContent('客户、产品、批次、缺陷、数量、影响、客户诉求')
     expect(screen.getByRole('button', { name: '创建案件并开始分析' })).toBeVisible()
+  })
+
+  it('cycles through preset examples on each click', async () => {
+    const api = { createCase: vi.fn() }
+    renderPage({ api, uploadAttachment: vi.fn() }, '/cases/new?preset=main')
+
+    await userEvent.click(screen.getByRole('button', { name: /切换下一个示例.*1\/5/ }))
+    expect(screen.getByLabelText('客诉内容')).toHaveValue(LOCAL_DEMO_COMPLAINT_EXAMPLES[1])
+    await userEvent.click(screen.getByRole('button', { name: /切换下一个示例.*2\/5/ }))
+    expect(screen.getByLabelText('客诉内容')).toHaveValue(LOCAL_DEMO_COMPLAINT_EXAMPLES[2])
+    await userEvent.click(screen.getByRole('button', { name: /切换下一个示例.*3\/5/ }))
+    await userEvent.click(screen.getByRole('button', { name: /切换下一个示例.*4\/5/ }))
+    await userEvent.click(screen.getByRole('button', { name: /切换下一个示例.*5\/5/ }))
+    expect(screen.getByLabelText('客诉内容')).toHaveValue(LOCAL_DEMO_COMPLAINT_EXAMPLES[0])
   })
 })

@@ -44,7 +44,7 @@ describe('EightDInitialView', () => {
     expect(screen.getByRole('heading', { name: 'D1 团队计划' })).toBeVisible()
     expect(screen.getByRole('heading', { name: 'D2 问题描述' })).toBeVisible()
     const d3 = screen.getByRole('region', { name: 'D3 临时遏制建议' })
-    expect(within(d3).getByText('AI 建议 · 未执行')).toBeVisible()
+    expect(within(d3).getByText('Agent 建议 · 未执行')).toBeVisible()
     expect(within(d3).getByText('建议隔离待核批次库存')).toBeVisible()
     expect(within(d3).queryByText('已执行')).not.toBeInTheDocument()
   })

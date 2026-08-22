@@ -74,7 +74,7 @@ describe('AnalysisPage', () => {
     renderPage(api)
 
     expect(await screen.findByRole('heading', { name: '案件决策摘要' })).toBeVisible()
-    expect(screen.getByText('人员安全风险（必须人工处理）')).toBeVisible()
+    expect(screen.getByText(/人员安全风险.*已触发人工复核/)).toBeVisible()
     expect(screen.getByText('24 小时内首次响应')).toBeVisible()
     expect(screen.getByText(analyzedCase.content)).toBeVisible()
     expect(screen.getByText('现场照片.png')).toBeVisible()
@@ -82,7 +82,7 @@ describe('AnalysisPage', () => {
     expect(screen.getByRole('heading', { name: 'Agent 分析建议' })).toBeVisible()
     expect(screen.getByText('AI 抽取')).toBeVisible()
     expect(screen.getAllByText('缺失信息').length).toBeGreaterThan(0)
-    expect(screen.getByText('AI 置信度：中（依据 1 条证据片段）')).toBeVisible()
+    expect(screen.getByText('分析置信度：中（依据 1 条证据片段）')).toBeVisible()
     expect(screen.getAllByText('缺陷').length).toBeGreaterThan(0)
     expect(screen.getByRole('heading', { name: '质量经理判断' })).toBeVisible()
     expect(screen.getByRole('note', { name: '高风险人工处理提示' })).toHaveTextContent('人员安全风险')
@@ -103,9 +103,10 @@ describe('AnalysisPage', () => {
 
     renderPage(api)
 
-    expect(await screen.findByRole('heading', { name: '人工接管包' })).toBeVisible()
-    expect(screen.getByText('原因：KNOWLEDGE_NOT_COVERED')).toBeVisible()
-    expect(screen.getByText('已检索知识：knowledge-1')).toBeVisible()
+    expect(await screen.findByRole('heading', { name: '案件接管包' })).toBeVisible()
+    const handoffCard = screen.getByRole('region', { name: '案件接管包' })
+    expect(handoffCard).toHaveTextContent('KNOWLEDGE_NOT_COVERED')
+    expect(handoffCard).toHaveTextContent('knowledge-1')
     expect(api.listHandoffs).toHaveBeenCalledWith('case-1')
   })
 
@@ -132,7 +133,7 @@ describe('AnalysisPage', () => {
 
     expect(api.answerKnowledge).toHaveBeenCalledWith(expect.objectContaining({ caseId: 'case-1', query: '未知工艺如何处理？', scope: { products: ['BR-2045'] } }))
     expect(await screen.findByText('未覆盖当前问题，已生成案件接管包。')).toBeVisible()
-    expect(screen.getByText('原因：KNOWLEDGE_NOT_COVERED')).toBeVisible()
+    expect(screen.getByRole('region', { name: '案件接管包' })).toHaveTextContent('KNOWLEDGE_NOT_COVERED')
   })
 
   it('offers case-aware recommended queries that fill the knowledge question', async () => {
@@ -175,7 +176,7 @@ describe('AnalysisPage', () => {
     await user.type(screen.getByLabelText('知识问题'), '可参考哪些临时遏制措施？')
     await user.click(screen.getByRole('button', { name: '查询已发布知识' }))
 
-    expect(await screen.findByText('已命中知识，但模型整理失败，已生成案件接管包。')).toBeVisible()
+    expect(await screen.findByText('已命中知识，但整理失败，已生成案件接管包。')).toBeVisible()
   })
 
   it('shows cited knowledge as manager-confirmation-only when a high-risk case is handed off', async () => {
@@ -206,7 +207,8 @@ describe('AnalysisPage', () => {
     expect(screen.getByRole('heading', { name: '已发布知识参考（待人工确认）' })).toBeVisible()
     expect(screen.getByText('冻结疑似库存，并保留样件用于后续调查。')).toBeVisible()
     expect(screen.getByText(/来料异常处理 SOP v1/)).toBeVisible()
-    expect(screen.getByText('原因：HIGH_RISK')).toBeVisible()
+    expect(screen.getByRole('region', { name: '案件接管包' })).toHaveTextContent('原因')
+    expect(screen.getByRole('region', { name: '案件接管包' })).toHaveTextContent('HIGH_RISK')
   })
 
   it('requires an explicit outcome selection before submitting a manager decision', async () => {
@@ -216,7 +218,7 @@ describe('AnalysisPage', () => {
     renderPage(api)
     await screen.findByRole('heading', { name: '质量经理判断' })
 
-    expect(screen.getByRole('button', { name: '确认并生成首次处理包' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: '生成首次处理包' })).toBeDisabled()
     expect(confirmCase).not.toHaveBeenCalled()
   })
 
@@ -242,13 +244,13 @@ describe('AnalysisPage', () => {
     await screen.findByRole('heading', { name: '质量经理判断' })
     await user.click(screen.getByRole('radio', { name: /修改 Agent 建议/ }))
     await user.selectOptions(screen.getByLabelText('严重度'), 'critical')
-    await user.click(screen.getByRole('button', { name: '确认并生成首次处理包' }))
+    await user.click(screen.getByRole('button', { name: '生成首次处理包' }))
 
     expect(screen.getByRole('alert')).toHaveTextContent('修改或驳回时必须填写原因')
     expect(confirmCase).not.toHaveBeenCalled()
 
     await user.type(screen.getByLabelText('修改原因'), '客户产线停线')
-    await user.click(screen.getByRole('button', { name: '确认并生成首次处理包' }))
+    await user.click(screen.getByRole('button', { name: '生成首次处理包' }))
 
     await waitFor(() => expect(confirmCase).toHaveBeenCalledWith({
       id: 'case-1',
@@ -268,11 +270,11 @@ describe('AnalysisPage', () => {
     renderPage(api)
     await screen.findByRole('heading', { name: '质量经理判断' })
     await user.click(screen.getByRole('radio', { name: /驳回 Agent 建议/ }))
-    await user.click(screen.getByRole('button', { name: '确认并生成首次处理包' }))
+    await user.click(screen.getByRole('button', { name: '生成首次处理包' }))
     expect(screen.getByRole('alert')).toHaveTextContent('修改或驳回时必须填写原因')
 
     await user.click(screen.getByRole('radio', { name: /接受 Agent 建议/ }))
-    await user.click(screen.getByRole('button', { name: '确认并生成首次处理包' }))
+    await user.click(screen.getByRole('button', { name: '生成首次处理包' }))
     await waitFor(() => expect(confirmCase).toHaveBeenCalledWith(expect.objectContaining({
       id: 'case-1',
       outcome: 'accepted',
@@ -287,10 +289,10 @@ describe('AnalysisPage', () => {
 
     renderPage(api)
     await screen.findByRole('heading', { name: '质量经理判断' })
-    await user.click(screen.getByLabelText('是否启动 8D'))
+    await user.click(screen.getByLabelText('启动 8D 流程'))
 
     expect(screen.getByRole('radio', { name: /修改 Agent 建议/ })).toBeChecked()
-    await user.click(screen.getByRole('button', { name: '确认并生成首次处理包' }))
+    await user.click(screen.getByRole('button', { name: '生成首次处理包' }))
     expect(screen.getByRole('alert')).toHaveTextContent('修改或驳回时必须填写原因')
     expect(confirmCase).not.toHaveBeenCalled()
   })
@@ -306,7 +308,7 @@ describe('AnalysisPage', () => {
     await user.selectOptions(screen.getByLabelText('严重度'), 'critical')
 
     expect(screen.getByRole('radio', { name: /修改 Agent 建议/ })).toBeChecked()
-    await user.click(screen.getByRole('button', { name: '确认并生成首次处理包' }))
+    await user.click(screen.getByRole('button', { name: '生成首次处理包' }))
     expect(screen.getByRole('alert')).toHaveTextContent('修改或驳回时必须填写原因')
     expect(confirmCase).not.toHaveBeenCalled()
   })
@@ -326,6 +328,6 @@ describe('AnalysisPage', () => {
     renderPage(api)
 
     expect(await screen.findByText('分析状态：人工接管')).toBeVisible()
-    expect(screen.getByText('失败原因：模型请求失败')).toBeVisible()
+    expect(screen.getByText('失败原因：分析服务请求失败')).toBeVisible()
   })
 })
