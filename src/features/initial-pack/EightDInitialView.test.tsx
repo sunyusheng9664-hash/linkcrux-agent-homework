@@ -54,9 +54,9 @@ describe('EightDInitialView', () => {
 
     const timeline = screen.getByRole('region', { name: '交付时间线' })
     expect(within(timeline).getAllByRole('listitem')).toHaveLength(3)
-    expect(within(timeline).getByText('24h')).toBeVisible()
-    expect(within(timeline).getByText('14d')).toBeVisible()
-    expect(within(timeline).getByText('30d')).toBeVisible()
+    expect(within(timeline).getByText('24 小时')).toBeVisible()
+    expect(within(timeline).getByText('14 天')).toBeVisible()
+    expect(within(timeline).getByText('30 天')).toBeVisible()
     expect(screen.getByRole('heading', { name: 'D4–D8 后续计划' })).toBeVisible()
     expect(screen.getAllByText('计划中')).toHaveLength(5)
     expect(screen.queryByText('已验证最终根因')).not.toBeInTheDocument()

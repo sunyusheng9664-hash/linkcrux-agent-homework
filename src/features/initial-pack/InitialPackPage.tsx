@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 
+import { formatCaseNumber, formatDateTime } from '../../domain/presentation'
 import type { CaseRecord, InitialPackFailureReason } from '../../contracts/case'
 import type { AgentApi } from '../../services/agentApi'
 import { EightDInitialView } from './EightDInitialView'
@@ -128,7 +129,24 @@ export function InitialPackPage({
     </main>
   }
   if (!caseRecord.initialPack) return <main className="page"><p role="alert">首次处理包状态异常，请联系管理员。</p></main>
-  return <main className="page"><EightDInitialView pack={caseRecord.initialPack} /></main>
+  const facts = { ...caseRecord.facts, ...caseRecord.analysis?.facts }
+  return <main className="page">
+    <nav className="breadcrumb" aria-label="面包屑">
+      <Link to="/">工作台</Link><span aria-hidden="true">/</span><span>案件 {formatCaseNumber(caseRecord.id)}</span><span aria-hidden="true">/</span><span aria-current="page">首次处理包</span>
+    </nav>
+    {caseRecord.managerDecision && <section className="panel success-banner" role="status">
+      <strong>人工判断已确认</strong>
+      <p>案件 {formatCaseNumber(caseRecord.id)} · 版本 v{caseRecord.version} · 生成时间 {formatDateTime(caseRecord.updatedAt)}</p>
+      <Link className="button secondary" to="/">返回工作台</Link>
+    </section>}
+    <EightDInitialView
+      pack={caseRecord.initialPack}
+      caseId={caseRecord.id}
+      caseCreatedAt={caseRecord.createdAt}
+      managerDecision={caseRecord.managerDecision}
+      facts={facts}
+    />
+  </main>
 }
 
 function wait(milliseconds: number): Promise<void> {

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 
 const LABELS = {
-  verified: '已核实事实',
+  statement: '客户陈述（待核实）',
   extracted: 'AI 抽取',
   suggested: 'AI 建议',
   missing: '缺失信息',

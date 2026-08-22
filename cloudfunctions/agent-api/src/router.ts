@@ -10,7 +10,7 @@ import {
   type InitialPackFailureReason,
   type InitialPack,
 } from '../../../src/contracts/case'
-import { KnowledgeScopeSchema, KnowledgeSourceTypeSchema, KnowledgeVisibilitySchema } from '../../../src/contracts/knowledge'
+import { KnowledgeConfidentialitySchema, KnowledgeScopeSchema, KnowledgeSourceTypeSchema, KnowledgeVisibilitySchema } from '../../../src/contracts/knowledge'
 import type { InitialPackSource } from './actions/generateInitialPack'
 import type { IngestKnowledgeInput } from './actions/ingestKnowledge'
 import type { KnowledgeAnswer } from './actions/answerKnowledge'
@@ -38,8 +38,9 @@ const KnowledgeIngestPayloadSchema = z.object({
   visibility: KnowledgeVisibilitySchema,
   effectiveAt: z.string().datetime(),
   expiresAt: z.string().datetime().optional(),
+  confidentiality: KnowledgeConfidentialitySchema.optional(),
 }).strict()
-const KnowledgeReviewPayloadSchema = z.object({ id: z.string().min(1), status: z.enum(['published', 'rejected']) }).strict()
+const KnowledgeReviewPayloadSchema = z.object({ id: z.string().min(1), status: z.enum(['published', 'rejected']), reason: z.string().trim().min(1).optional() }).strict()
 const KnowledgeAnswerPayloadSchema = z.object({ query: z.string().trim().min(1).max(1000), scope: KnowledgeScopeSchema, caseId: z.string().min(1).optional() }).strict()
 const HandoffPayloadSchema = z.object({ id: z.string().min(1), reason: z.enum(['OUT_OF_SCOPE', 'HIGH_RISK', 'INFORMATION_INSUFFICIENT', 'SYSTEM_QUERY_REQUIRED', 'KNOWLEDGE_NOT_COVERED', 'LOW_CONFIDENCE']), suggestedTeam: z.string().trim().min(1), searchedKnowledge: z.array(z.string().min(1)).max(3).default([]) }).strict()
 
@@ -54,7 +55,7 @@ export type RouterDependencies = {
   ingestKnowledge?: (input: IngestKnowledgeInput) => Promise<unknown>
   reviewKnowledgeItem?: (
     id: string,
-    input: { status: 'published' | 'rejected' },
+    input: { status: 'published' | 'rejected'; reason?: string },
     reviewer: { userId: string; role: 'quality_manager' | 'knowledge_owner' },
   ) => Promise<unknown>
   answerKnowledge?: (query: string, context: { now: string; actorId: string; role: 'quality_manager' | 'knowledge_owner'; scope: z.infer<typeof KnowledgeScopeSchema> }, options?: { referenceOnly?: boolean }) => Promise<KnowledgeAnswer>
@@ -94,7 +95,7 @@ export async function route(request: z.input<typeof ApiRequestSchema>, context: 
     case 'knowledge.review': {
       if (!deps.reviewKnowledgeItem) throw new Error('KNOWLEDGE_UNAVAILABLE')
       const payload = KnowledgeReviewPayloadSchema.parse(parsedRequest.payload)
-      return success(await deps.reviewKnowledgeItem(payload.id, { status: payload.status }, {
+      return success(await deps.reviewKnowledgeItem(payload.id, { status: payload.status, reason: payload.reason }, {
         userId,
         role: context.knowledgeRole ?? 'quality_manager',
       }))

@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -28,6 +28,27 @@ const intakeCase: CaseRecord = {
   createdAt: '2026-08-21T07:00:00+08:00', updatedAt: '2026-08-21T07:00:00+08:00', version: 1,
 }
 
+const packedCase: CaseRecord = {
+  id: 'case-packed', content: '已完成处理的客诉。', facts: { customer: '海川制造', product: 'P-100', defect: '外观划伤' },
+  attachments: [], status: 'initial_pack', createdBy: 'manager-1',
+  createdAt: '2026-08-20T06:00:00+08:00', updatedAt: '2026-08-21T06:00:00+08:00', version: 5,
+  analysisStatus: 'ai_completed',
+  analysis: {
+    facts: { customer: '海川制造', product: 'P-100', defect: '外观划伤' },
+    missingFields: [], informationCompleteness: 100,
+    riskSuggestion: [], departmentSuggestion: ['质量部'], slaSuggestion: '24 小时', start8dSuggestion: false, confidence: 0.9,
+    evidenceSpans: [], routing: { highRisk: false, requiresHuman: false }, analysisStatus: 'ai_completed',
+  },
+  managerDecision: { outcome: 'accepted', severity: 'medium', start8d: false },
+  initialPackStatus: 'generated',
+  initialPack: {
+    customerReply: '已收到投诉。', internalTicket: '工单。', d1: '计划。', d2: '描述。',
+    d3: { containmentActions: [{ suggestedAction: '隔离库存', owner: '质量经理', dueAt: '24 小时内', executionStatus: 'suggested', evidence: [] }] },
+    timeline24h14d30d: [{ milestone: '24h', delivery: '首响' }, { milestone: '14d', delivery: '调查' }, { milestone: '30d', delivery: '闭环' }],
+    d4ToD8Plan: [{ phase: 'D4', plan: '计划' }, { phase: 'D5', plan: '计划' }, { phase: 'D6', plan: '计划' }, { phase: 'D7', plan: '计划' }, { phase: 'D8', plan: '计划' }],
+  },
+}
+
 function LocationProbe() { return <p data-testid="location">{useLocation().pathname}</p> }
 
 function renderWorkbench(listCases: () => Promise<CaseRecord[]>) {
@@ -40,18 +61,36 @@ function renderWorkbench(listCases: () => Promise<CaseRecord[]>) {
 afterEach(cleanup)
 
 describe('WorkbenchPage', () => {
-  it('lists the signed-in manager cases with risk, missing information and the real next action', async () => {
+  it('leads the interviewer with a single guided example entry and explains the 1-4 experience flow', async () => {
+    renderWorkbench(vi.fn().mockResolvedValue([]))
+
+    expect(await screen.findByRole('heading', { name: '推荐体验：5 分钟走完一条客诉' })).toBeVisible()
+    expect(screen.getByRole('link', { name: '开始 5 分钟示例体验' })).toHaveAttribute('href', '/cases/new?preset=main')
+    const guide = screen.getByLabelText('示例体验步骤')
+    expect(guide).toHaveTextContent('1受理2Agent 分析3人工判断4首次处理包')
+    expect(screen.getByRole('link', { name: '新建真实客诉' })).toHaveAttribute('href', '/cases/new')
+  })
+
+  it('groups cases into attention and recent, shows short number, status badge, risk and missing info', async () => {
     const user = userEvent.setup()
-    const listCases = vi.fn().mockResolvedValue([intakeCase, analyzedCase])
+    const listCases = vi.fn().mockResolvedValue([intakeCase, analyzedCase, packedCase])
     renderWorkbench(listCases)
 
     expect(screen.getByRole('status')).toHaveTextContent('正在读取案件')
     expect(await screen.findByRole('heading', { name: '华东精工｜BR-2045' })).toBeVisible()
-    expect(screen.getByText('高风险｜必须人工处理')).toBeVisible()
-    expect(screen.getByText('待补信息：受影响数量')).toBeVisible()
-    expect(screen.getByText('待质量经理判断')).toBeVisible()
-    expect(screen.getByRole('heading', { name: '海川制造｜P-100' })).toBeVisible()
-    expect(screen.getByText('待分析')).toBeVisible()
+
+    const attention = screen.getByRole('region', { name: '待我处理' })
+    expect(attention).toHaveTextContent('待质量经理判断')
+    expect(attention).toHaveTextContent('待受理')
+    expect(attention).toHaveTextContent('重大停线风险')
+    expect(attention).toHaveTextContent('受影响数量')
+    const caseNumbers = within(attention).getAllByText(/^KS-\d{5}$/)
+    expect(caseNumbers).toHaveLength(2)
+    expect(within(attention).getAllByText('录入客诉')).toHaveLength(2)
+
+    const recent = screen.getByRole('region', { name: '最近更新' })
+    expect(within(recent).getByText('首次处理包已生成')).toBeVisible()
+    expect(within(recent).getByText('外观划伤')).toBeVisible()
 
     await user.click(screen.getByRole('link', { name: '继续处理 华东精工｜BR-2045' }))
     expect(screen.getByTestId('location')).toHaveTextContent('/cases/case-high-risk/analyze')
@@ -60,7 +99,7 @@ describe('WorkbenchPage', () => {
   it('shows an honest empty state only after the case query completes', async () => {
     renderWorkbench(vi.fn().mockResolvedValue([]))
     expect(await screen.findByText('当前还没有客诉案件。')).toBeVisible()
-    expect(screen.getByRole('link', { name: '新建第一条客诉' })).toHaveAttribute('href', '/cases/new')
+    expect(screen.getByRole('link', { name: '开始示例体验' })).toHaveAttribute('href', '/cases/new?preset=main')
   })
 
   it('shows a readable error when the case query fails', async () => {

@@ -5,6 +5,7 @@ export const KnowledgeSourceTypeSchema = z.enum(['enterprise_document', 'public_
 export const DocumentStatusSchema = z.enum(['uploaded', 'parsed', 'failed', 'superseded', 'expired'])
 export const KnowledgeItemStatusSchema = z.enum(['draft', 'pending_review', 'published', 'expired', 'rejected', 'impacted'])
 export const KnowledgeVisibilitySchema = z.enum(['quality_team', 'quality_manager', 'knowledge_owner'])
+export const KnowledgeConfidentialitySchema = z.enum(['internal', 'confidential'])
 
 export const KnowledgeScopeSchema = z.object({
   factories: z.array(z.string().trim().min(1)).max(20).optional(),
@@ -59,6 +60,8 @@ const KnowledgeItemBaseSchema = z.object({
   status: KnowledgeItemStatusSchema,
   reviewedBy: z.string().min(1).optional(),
   reviewedAt: z.string().datetime().optional(),
+  rejectionReason: z.string().trim().min(1).optional(),
+  confidentiality: KnowledgeConfidentialitySchema.optional(),
   effectiveAt: z.string().datetime(),
   expiresAt: z.string().datetime().optional(),
   createdBy: z.string().min(1),
@@ -87,4 +90,5 @@ export type KnowledgeChunk = z.infer<typeof KnowledgeChunkSchema>
 export type KnowledgeItem = z.infer<typeof KnowledgeItemSchema>
 export type KnowledgeScope = z.infer<typeof KnowledgeScopeSchema>
 export type KnowledgeVisibility = z.infer<typeof KnowledgeVisibilitySchema>
+export type KnowledgeConfidentiality = z.infer<typeof KnowledgeConfidentialitySchema>
 export type KnowledgeSourceType = z.infer<typeof KnowledgeSourceTypeSchema>

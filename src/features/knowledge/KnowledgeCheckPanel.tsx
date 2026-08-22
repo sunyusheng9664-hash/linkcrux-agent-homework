@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 
+import type { CaseFactField } from '../../contracts/case'
 import type { KnowledgeScope } from '../../contracts/knowledge'
 import type { AgentApi } from '../../services/agentApi'
 import { HandoffPanel } from '../handoff/HandoffPanel'
@@ -12,11 +13,20 @@ function handoffNotice(reason: KnowledgeAnswer['reason']): string {
   return '未覆盖当前问题，已生成案件接管包。'
 }
 
-export function KnowledgeCheckPanel({ api, caseId, scope }: { api: Pick<AgentApi, 'answerKnowledge'>; caseId: string; scope: KnowledgeScope }) {
+function buildSuggestions(facts: Partial<Record<CaseFactField, string>>): string[] {
+  const suggestions: string[] = []
+  if (facts.defect) suggestions.push(`${facts.defect}后如何临时遏制？`)
+  if (facts.impact && /停线|停产|中断|已停/.test(facts.impact)) suggestions.push('产线停线后的临时隔离与恢复措施')
+  suggestions.push('本案还需要补充哪些信息才能继续处理？')
+  return [...new Set(suggestions)].slice(0, 3)
+}
+
+export function KnowledgeCheckPanel({ api, caseId, scope, facts = {} }: { api: Pick<AgentApi, 'answerKnowledge'>; caseId: string; scope: KnowledgeScope; facts?: Partial<Record<CaseFactField, string>> }) {
   const [query, setQuery] = useState('')
   const [result, setResult] = useState<KnowledgeAnswer>()
   const [error, setError] = useState<string>()
   const [submitting, setSubmitting] = useState(false)
+  const suggestions = buildSuggestions(facts)
 
   async function submit(event: FormEvent) {
     event.preventDefault()
@@ -28,10 +38,14 @@ export function KnowledgeCheckPanel({ api, caseId, scope }: { api: Pick<AgentApi
 
   return <section className="panel" aria-labelledby="knowledge-check-heading">
     <h2 id="knowledge-check-heading">知识核查</h2>
-    <p>仅引用已发布、在当前案件范围内命中的知识；未覆盖、低置信度或敏感决策不补全，直接生成案件接管包。</p>
+    <p>仅引用已发布、在当前案件范围内命中的知识；未覆盖、低置信度或敏感决策不补全，直接生成案件接管包。查询不会自动执行任何措施。</p>
     <form className="form" onSubmit={submit}>
       <label htmlFor="knowledge-question">知识问题</label>
       <textarea id="knowledge-question" value={query} onChange={(event) => setQuery(event.target.value)} rows={3} />
+      {suggestions.length > 0 && <div className="suggestion-chips" aria-label="推荐查询">
+        <span className="hint">推荐查询：</span>
+        {suggestions.map((suggestion) => <button key={suggestion} type="button" className="chip-button" onClick={() => setQuery(suggestion)}>{suggestion}</button>)}
+      </div>}
       <button type="submit" disabled={submitting || !query.trim()}>查询已发布知识</button>
     </form>
     {error && <p role="alert">{error}</p>}

@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import { KnowledgeItemSchema, KnowledgeSourceTypeSchema, KnowledgeVisibilitySchema, type Document, type KnowledgeChunk, type KnowledgeItem, type KnowledgeScope } from '../../../../src/contracts/knowledge'
+import { KnowledgeConfidentialitySchema, KnowledgeItemSchema, KnowledgeSourceTypeSchema, KnowledgeVisibilitySchema, type Document, type KnowledgeChunk, type KnowledgeItem, type KnowledgeScope } from '../../../../src/contracts/knowledge'
 import { buildDraftKnowledgeItemMessages } from '../prompts/draftKnowledgeItems'
 import { KnowledgeRepository } from '../repositories/knowledgeRepository'
 import type { ModelClient } from '../services/modelClient'
@@ -61,6 +61,7 @@ export type IngestKnowledgeInput = {
   visibility: z.input<typeof KnowledgeVisibilitySchema>
   effectiveAt: string
   expiresAt?: string
+  confidentiality?: z.input<typeof KnowledgeConfidentialitySchema>
 }
 
 export async function ingestKnowledge(deps: IngestKnowledgeDependencies, input: IngestKnowledgeInput): Promise<{
@@ -103,6 +104,7 @@ export async function ingestKnowledge(deps: IngestKnowledgeDependencies, input: 
         owner: input.owner,
         scope: input.scope,
         visibility: input.visibility,
+        confidentiality: input.confidentiality,
         status: 'pending_review',
         effectiveAt: input.effectiveAt,
         expiresAt: input.expiresAt,

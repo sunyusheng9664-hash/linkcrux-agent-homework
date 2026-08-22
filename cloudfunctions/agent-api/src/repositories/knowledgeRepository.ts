@@ -106,7 +106,7 @@ export class KnowledgeRepository {
     return KnowledgeItemSchema.array().parse(await this.adapter.findItems()).filter((item) => item.status === 'pending_review')
   }
 
-  async reviewItem(id: string, reviewerId: string, status: 'published' | 'rejected'): Promise<KnowledgeItem> {
+  async reviewItem(id: string, reviewerId: string, status: 'published' | 'rejected', rejectionReason?: string): Promise<KnowledgeItem> {
     const item = await this.getItem(id)
     if (item.status !== 'pending_review') throw new Error('KNOWLEDGE_REVIEW_STATE_INVALID')
     if (status === 'published') {

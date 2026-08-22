@@ -14,7 +14,6 @@ import type { AttachmentUpload, AuthService } from './cloudbase'
 const SESSION_KEY = 'quality-complaint-agent:local-demo-session'
 const CASE_KEY = 'quality-complaint-agent:local-demo-case'
 const DEMO_USER_ID = 'local-demo-linghe'
-const BASE_TIME = '2026-08-20T09:00:00+08:00'
 
 export type LocalDemoServices = {
   auth: AuthService
@@ -23,6 +22,9 @@ export type LocalDemoServices = {
 }
 
 export function createLocalDemoServices(storage: Storage = window.localStorage): LocalDemoServices {
+  // 演示时间以本次进入为准，避免固定日期导致时间线全部显示已超期。
+  const startedAt = Date.now()
+  const demoTime = (offsetMs: number): string => new Date(startedAt + offsetMs).toISOString()
   const auth: AuthService = {
     async signIn(username, password) {
       if (username !== 'linghe' || password !== 'shuzhi') throw new Error('LOCAL_DEMO_LOGIN_FAILED')
@@ -48,8 +50,8 @@ export function createLocalDemoServices(storage: Storage = window.localStorage):
         attachments: [],
         status: 'intake',
         createdBy: DEMO_USER_ID,
-        createdAt: BASE_TIME,
-        updatedAt: BASE_TIME,
+        createdAt: demoTime(0),
+        updatedAt: demoTime(0),
         version: 1,
       })
       saveCase(storage, record)
@@ -69,7 +71,7 @@ export function createLocalDemoServices(storage: Storage = window.localStorage):
       const analyzed = CaseRecordSchema.parse({
         ...record,
         status: 'analyzed',
-        updatedAt: '2026-08-20T09:00:05+08:00',
+        updatedAt: demoTime(5_000),
         version: record.version + 1,
         analysisStatus: 'ai_completed',
         analysis: {
@@ -117,7 +119,7 @@ export function createLocalDemoServices(storage: Storage = window.localStorage):
         ...record,
         status: 'confirmed',
         managerDecision: decision,
-        updatedAt: '2026-08-20T09:01:00+08:00',
+        updatedAt: demoTime(60_000),
         version: record.version + 1,
       })
       saveCase(storage, confirmed)
@@ -131,8 +133,8 @@ export function createLocalDemoServices(storage: Storage = window.localStorage):
         ...record,
         status: 'initial_pack',
         initialPackStatus: 'generated',
-        initialPack: createDemoInitialPack(record.managerDecision),
-        updatedAt: '2026-08-20T09:01:05+08:00',
+        initialPack: createDemoInitialPack(record.managerDecision, demoTime),
+        updatedAt: demoTime(65_000),
         version: record.version + 1,
       })
       saveCase(storage, generated)
@@ -154,7 +156,7 @@ export function createLocalDemoServices(storage: Storage = window.localStorage):
         decision: 'handoff' as const, answer: null, citations: [], missingInformation: [], reason: 'KNOWLEDGE_NOT_COVERED' as const,
         handoff: {
           id: 'demo-handoff-knowledge', caseId: caseId ?? 'demo-case-main', source: 'knowledge' as const, confirmedFacts: {}, missingFields: ['batch', 'quantity'], riskSignals: [], searchedKnowledge: [], reason: 'KNOWLEDGE_NOT_COVERED' as const,
-          suggestedTeam: '质量经理人工接管', sla: '4 个工作小时内人工响应', transitionReply: 'Demo 模拟：已转交质量经理人工处理。', createdAt: BASE_TIME,
+          suggestedTeam: '质量经理人工接管', sla: '4 个工作小时内人工响应', transitionReply: 'Demo 模拟：已转交质量经理人工处理。', createdAt: demoTime(0),
         },
       }
     },
@@ -167,7 +169,7 @@ export function createLocalDemoServices(storage: Storage = window.localStorage):
   return { auth, api, uploadAttachment }
 }
 
-function createDemoInitialPack(decision: ManagerDecision): InitialPack {
+function createDemoInitialPack(decision: ManagerDecision, demoTime: (offsetMs: number) => string): InitialPack {
   const severityLabel = { low: '低', medium: '中', high: '高', critical: '严重' }[decision.severity]
   return {
     customerReply: 'Demo 模拟草案：已收到本次客诉。当前仅确认批次、尺寸超差与停线描述；根因、责任、召回及补偿均待调查和人工批准。',
@@ -179,14 +181,14 @@ function createDemoInitialPack(decision: ManagerDecision): InitialPack {
         {
           suggestedAction: '建议隔离待核批次库存并暂停关联批次发运',
           owner: '质量经理',
-          dueAt: '2026-08-20T17:00:00+08:00',
+          dueAt: demoTime(8 * 60 * 60 * 1000),
           executionStatus: 'suggested',
           evidence: [],
         },
         {
           suggestedAction: '建议保全客诉样品、测量记录与现场照片',
           owner: '客户质量工程师',
-          dueAt: '2026-08-21T09:00:00+08:00',
+          dueAt: demoTime(24 * 60 * 60 * 1000),
           executionStatus: 'suggested',
           evidence: [],
         },

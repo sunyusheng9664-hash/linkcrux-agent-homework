@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 
-import type { CaseFactField, CaseRecord, ManagerDecision } from '../../contracts/case'
+import type { CaseFactField, CaseRecord, ManagerDecision, RiskSignal } from '../../contracts/case'
+import { confidenceLevel, factLabel, formatCaseNumber } from '../../domain/presentation'
 import type { AgentApi } from '../../services/agentApi'
 import { EvidenceTag } from './EvidenceTag'
 import { ManagerDecisionForm } from './ManagerDecisionForm'
@@ -32,6 +33,9 @@ export function AnalysisPage({ api }: { api: Pick<AgentApi, 'getCase' | 'analyze
   const [caseRecord, setCaseRecord] = useState<CaseRecord>()
   const [handoffs, setHandoffs] = useState<Awaited<ReturnType<AgentApi['listHandoffs']>>>([])
   const [error, setError] = useState<string>()
+  const [detailsOpen, setDetailsOpen] = useState(true)
+  const [highlight, setHighlight] = useState<string>()
+  const detailsRef = useRef<HTMLDetailsElement>(null)
 
   useEffect(() => {
     let active = true
@@ -54,25 +58,52 @@ export function AnalysisPage({ api }: { api: Pick<AgentApi, 'getCase' | 'analyze
   if (!caseRecord?.analysis) return <main className="page"><p>正在分析案件…</p></main>
 
   const analysis = caseRecord.analysis
+  const facts = { ...caseRecord.facts, ...analysis.facts }
   async function confirm(decision: ManagerDecision) {
     if (!id) return
     await api.confirmCase({ id, ...decision })
     navigate(`/cases/${id}/initial-pack`)
   }
 
+  function locateInOriginal(text: string) {
+    setHighlight(text)
+    setDetailsOpen(true)
+    requestAnimationFrame(() => detailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+  }
+
+  const risk = analysis.riskSuggestion[0]
+  const confidence = confidenceLevel(analysis.confidence)
+
   return <main className="page analysis-page">
+    <nav className="breadcrumb" aria-label="面包屑">
+      <Link to="/">工作台</Link><span aria-hidden="true">/</span><span>案件 {formatCaseNumber(caseRecord.id)}</span><span aria-hidden="true">/</span><span aria-current="page">案件分析</span>
+    </nav>
     <header><h1>案件分析与人工判断</h1><p>Agent 负责整理证据和建议；质量经理负责最终业务判断。</p></header>
 
-    <section className="panel" aria-labelledby="complaint-evidence-heading">
-      <h2 id="complaint-evidence-heading">投诉原文与附件</h2>
-      <p>{caseRecord.content}</p>
-      <h3><EvidenceTag kind="verified" /> 人工录入事实</h3>
+    <section className="panel decision-summary" aria-labelledby="decision-summary-heading">
+      <h2 id="decision-summary-heading">案件决策摘要</h2>
+      <dl className="summary-grid">
+        <div><dt>风险等级</dt><dd>{risk
+          ? <span className="risk-level risk-level--danger">{risk.label}（必须人工处理）</span>
+          : <span className="risk-level">未识别到硬风险</span>}</dd></div>
+        <div><dt>缺失信息</dt><dd>{analysis.missingFields.length > 0
+          ? analysis.missingFields.map((field) => <span key={field} className="chip">{factLabel(field)}</span>)
+          : '无'}</dd></div>
+        <div><dt>推荐动作</dt><dd>{analysis.departmentSuggestion.join('、')}{analysis.start8dSuggestion ? '；建议启动 8D' : ''}</dd></div>
+        <div><dt>响应时限</dt><dd>{analysis.slaSuggestion}</dd></div>
+      </dl>
+    </section>
+
+    <details className="panel" open={detailsOpen} ref={detailsRef} aria-labelledby="complaint-evidence-heading">
+      <summary id="complaint-evidence-heading">投诉原文与附件<EvidenceTag kind="statement" /></summary>
+      <p>{highlight ? <HighlightedText text={caseRecord.content} highlight={highlight} /> : caseRecord.content}</p>
+      <h3><EvidenceTag kind="statement" /> 客户陈述（待核实）</h3>
       <FactList facts={caseRecord.facts ?? {}} emptyText="暂无单独录入的结构化事实" />
       <h3>附件</h3>
       {caseRecord.attachments.length > 0
         ? <ul>{caseRecord.attachments.map((attachment) => <li key={attachment.fileId}><span>{attachment.originalName}</span>（{attachment.mimeType}，{attachment.size} bytes）</li>)}</ul>
         : <p>无附件</p>}
-    </section>
+    </details>
 
     <section className="panel" aria-labelledby="agent-analysis-heading">
       <h2 id="agent-analysis-heading">Agent 分析建议</h2>
@@ -82,31 +113,48 @@ export function AnalysisPage({ api }: { api: Pick<AgentApi, 'getCase' | 'analyze
       <FactList facts={analysis.facts} emptyText="Agent 未抽取到可溯源事实" />
       <h3><EvidenceTag kind="missing" /> 待补信息</h3>
       {analysis.missingFields.length > 0
-        ? <ul>{analysis.missingFields.map((field) => <li key={field}>{FACT_LABELS[field]}</li>)}</ul>
+        ? <ul className="chip-list">{analysis.missingFields.map((field) => <li key={field} className="chip">{FACT_LABELS[field]}</li>)}</ul>
         : <p>当前无缺失字段</p>}
       <h3><EvidenceTag kind="suggested" /> 风险与处理建议</h3>
-      <p>置信度：{Math.round(analysis.confidence * 100)}%</p>
+      <p>AI 置信度：{confidence.label}（依据 {analysis.evidenceSpans.length} 条证据片段）</p>
       <p>建议部门：{analysis.departmentSuggestion.join('、')}</p>
       <p>建议 SLA：{analysis.slaSuggestion}</p>
       <p>建议启动 8D：{analysis.start8dSuggestion ? '是' : '否'}</p>
       {analysis.riskSuggestion.length > 0
-        ? <ul>{analysis.riskSuggestion.map((risk) => <li key={risk.code}>{risk.label}；证据：{risk.evidence}</li>)}</ul>
+        ? <ul>{analysis.riskSuggestion.map((item) => <RiskItem key={item.code} risk={item} />)}</ul>
         : <p>Agent 未识别到硬风险信号</p>}
       <h3>证据片段</h3>
       {analysis.evidenceSpans.length > 0
-        ? <ul>{analysis.evidenceSpans.map((span, index) => <li key={`${span.field}-${index}`}>{span.field}：“{span.text}”</li>)}</ul>
+        ? <ul className="evidence-list">{analysis.evidenceSpans.map((span, index) => <li key={`${span.field}-${index}`}>
+          <span className="evidence-label">{factLabel(span.field as CaseFactField) || span.field}</span>
+          <span className="evidence-text">“{span.text}”</span>
+          <button type="button" className="secondary small" onClick={() => locateInOriginal(span.text)}>定位到原文</button>
+        </li>)}</ul>
         : <p>暂无可引用证据片段</p>}
     </section>
 
     {handoffs.map((packet) => <HandoffPanel key={packet.id} packet={packet} />)}
-    {api.answerKnowledge && <KnowledgeCheckPanel api={{ answerKnowledge: api.answerKnowledge }} caseId={caseRecord.id} scope={caseKnowledgeScope(caseRecord)} />}
+    {api.answerKnowledge && <KnowledgeCheckPanel api={{ answerKnowledge: api.answerKnowledge }} caseId={caseRecord.id} scope={caseKnowledgeScope(caseRecord)} facts={facts} />}
 
     <ManagerDecisionForm
       initialStart8d={analysis.start8dSuggestion}
       requiresHuman={analysis.routing.requiresHuman}
+      riskLabel={risk?.label}
+      riskEvidence={risk?.evidence}
+      slaSuggestion={analysis.slaSuggestion}
       onConfirm={confirm}
     />
   </main>
+}
+
+function RiskItem({ risk }: { risk: RiskSignal }) {
+  return <li className="risk-item"><strong>{risk.label}</strong>；证据：{risk.evidence}</li>
+}
+
+function HighlightedText({ text, highlight }: { text: string; highlight: string }) {
+  const index = text.indexOf(highlight)
+  if (index < 0) return <>{text}</>
+  return <>{text.slice(0, index)}<mark>{highlight}</mark>{text.slice(index + highlight.length)}</>
 }
 
 function caseKnowledgeScope(caseRecord: CaseRecord) {

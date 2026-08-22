@@ -3,13 +3,25 @@ import { useState, type FormEvent } from 'react'
 import { managerSeverityBaseline, type ManagerDecision } from '../../contracts/case'
 import { EvidenceTag } from './EvidenceTag'
 
+const OUTCOME_OPTIONS: Array<{ value: ManagerDecision['outcome']; title: string; description: string }> = [
+  { value: 'accepted', title: '接受 Agent 建议', description: '直接采用当前分析结论' },
+  { value: 'modified', title: '修改 Agent 建议', description: '调整严重度、8D 或补充说明' },
+  { value: 'rejected', title: '驳回 Agent 建议', description: '不采纳当前结论，需说明原因' },
+]
+
 export function ManagerDecisionForm({
   initialStart8d,
   requiresHuman,
+  riskLabel,
+  riskEvidence,
+  slaSuggestion,
   onConfirm,
 }: {
   initialStart8d: boolean
   requiresHuman: boolean
+  riskLabel?: string
+  riskEvidence?: string
+  slaSuggestion?: string
   onConfirm: (decision: ManagerDecision) => Promise<void>
 }) {
   const initialSeverity = managerSeverityBaseline(requiresHuman)
@@ -43,21 +55,38 @@ export function ManagerDecisionForm({
     }
   }
 
-  return <section className="panel" aria-labelledby="manager-decision-heading">
+  return <section className="panel manager-decision" aria-labelledby="manager-decision-heading">
     <h2 id="manager-decision-heading">质量经理判断</h2>
     <p><EvidenceTag kind="confirmed" /> 以下结论由质量经理负责确认并留痕。</p>
-    <form className="form" onSubmit={submit} noValidate>
-      <label htmlFor="requires-human">需要人工处理</label>
-      <input id="requires-human" type="checkbox" checked={requiresHuman} disabled readOnly />
-      {requiresHuman && <p className="hint">高风险案件已锁定人工处理，浏览器端不可关闭。</p>}
 
-      <label htmlFor="manager-outcome">判断结果</label>
-      <select id="manager-outcome" value={outcome} onChange={(event) => setOutcome(event.target.value as ManagerDecision['outcome'])}>
-        <option value="" disabled>请选择判断结果</option>
-        <option value="accepted">接受 Agent 建议</option>
-        <option value="modified">修改 Agent 建议</option>
-        <option value="rejected">驳回 Agent 建议</option>
-      </select>
+    {requiresHuman && <div className="risk-banner risk-banner--locked" role="note" aria-label="高风险人工处理提示">
+      <strong>重大风险：必须由质量经理确认</strong>
+      {riskLabel && <p>{riskLabel}{riskEvidence ? `（证据：${riskEvidence}）` : ''}</p>}
+      {slaSuggestion && <p>升级 SLA：{slaSuggestion}</p>}
+    </div>}
+
+    <form className="form" onSubmit={submit} noValidate>
+      <fieldset className="decision-cards">
+        <legend>判断结果</legend>
+        {OUTCOME_OPTIONS.map((option) => (
+          <label key={option.value} className={`decision-card${outcome === option.value ? ' decision-card--selected' : ''}`}>
+            <input
+              type="radio"
+              name="manager-outcome"
+              value={option.value}
+              checked={outcome === option.value}
+              onChange={(event) => setOutcome(event.target.value as ManagerDecision['outcome'])}
+            />
+            <span><strong>{option.title}</strong><small>{option.description}</small></span>
+          </label>
+        ))}
+      </fieldset>
+
+      {(outcome === 'modified' || outcome === 'rejected') && <>
+        <label htmlFor="manager-reason">修改原因</label>
+        <textarea id="manager-reason" value={reason} onChange={(event) => setReason(event.target.value)} aria-describedby="manager-reason-hint" rows={3} />
+        <p className="hint" id="manager-reason-hint">修改或驳回 Agent 建议时必填，将作为人工判断留痕。</p>
+      </>}
 
       <label htmlFor="manager-severity">严重度</label>
       <select id="manager-severity" value={severity} onChange={(event) => {
@@ -77,17 +106,12 @@ export function ManagerDecisionForm({
         if (event.target.checked !== initialStart8d) setOutcome('modified')
       }} />
 
-      <label htmlFor="manager-reason">修改原因</label>
-      <textarea
-        id="manager-reason"
-        value={reason}
-        onChange={(event) => setReason(event.target.value)}
-        aria-describedby="manager-reason-hint"
-        rows={3}
-      />
-      <p className="hint" id="manager-reason-hint">修改或驳回 Agent 建议时必填；接受原建议时可留空。</p>
       {error && <p role="alert">{error}</p>}
-      <button type="submit" disabled={!outcome || submitting}>{submitting ? '正在保存…' : '确认判断'}</button>
+
+      <div className="submit-bar submit-bar--sticky">
+        <p className="hint">提交后将生成客户首响、内部工单与 D1–D3 初版。</p>
+        <button type="submit" disabled={!outcome || submitting}>{submitting ? '正在生成…' : '确认并生成首次处理包'}</button>
+      </div>
     </form>
   </section>
 }

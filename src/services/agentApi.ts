@@ -28,7 +28,7 @@ const KnowledgeAnswerSchema = z.object({
   handoff: HandoffPacketSchema.optional(),
 }).strict()
 export type KnowledgeIngestInput = {
-  name: string; mimeType: 'text/plain' | 'text/markdown'; sourceType: z.input<typeof KnowledgeSourceTypeSchema>; originalFileId: string; version: string; text: string; owner: string; scope: z.input<typeof KnowledgeScopeSchema>; visibility: z.input<typeof KnowledgeVisibilitySchema>; effectiveAt: string; expiresAt?: string
+  name: string; mimeType: 'text/plain' | 'text/markdown'; sourceType: z.input<typeof KnowledgeSourceTypeSchema>; originalFileId: string; version: string; text: string; owner: string; scope: z.input<typeof KnowledgeScopeSchema>; visibility: z.input<typeof KnowledgeVisibilitySchema>; effectiveAt: string; expiresAt?: string; confidentiality?: 'internal' | 'confidential'
 }
 
 export type AgentApi = {
@@ -40,7 +40,7 @@ export type AgentApi = {
   generateInitialPack(id: string, options?: { retry?: boolean }): Promise<CaseRecord>
   ingestKnowledge(input: KnowledgeIngestInput): Promise<z.infer<typeof KnowledgeIngestResultSchema>>
   listPendingKnowledge(): Promise<z.infer<typeof KnowledgeItemSchema>[]>
-  reviewKnowledge(id: string, status: 'published' | 'rejected'): Promise<z.infer<typeof KnowledgeItemSchema>>
+  reviewKnowledge(id: string, status: 'published' | 'rejected', reason?: string): Promise<z.infer<typeof KnowledgeItemSchema>>
   getKnowledgeCitation(id: string): Promise<z.infer<typeof KnowledgeCitationSourceSchema>>
   listHandoffs(id: string): Promise<z.infer<typeof HandoffPacketSchema>[]>
   answerKnowledge(input: { query: string; scope: z.input<typeof KnowledgeScopeSchema>; caseId?: string }): Promise<z.infer<typeof KnowledgeAnswerSchema>>
@@ -75,8 +75,8 @@ export function createAgentApi(client: CloudbaseClient = createCloudbaseClient()
     async listPendingKnowledge() {
       return KnowledgeItemSchema.array().parse(await call(client, 'knowledge.pending', {}))
     },
-    async reviewKnowledge(id, status) {
-      return KnowledgeItemSchema.parse(await call(client, 'knowledge.review', { id, status }))
+    async reviewKnowledge(id, status, reason) {
+      return KnowledgeItemSchema.parse(await call(client, 'knowledge.review', { id, status, reason }))
     },
     async getKnowledgeCitation(id) {
       return KnowledgeCitationSourceSchema.parse(await call(client, 'knowledge.citation', { id }))
