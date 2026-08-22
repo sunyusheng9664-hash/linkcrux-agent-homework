@@ -191,7 +191,17 @@ export function EightDInitialView({
     <section className="panel" aria-labelledby="follow-up-heading">
       <h2 id="follow-up-heading">D4–D8 后续计划</h2>
       <p className="hint">这些内容是下一阶段工作计划，不是已经核实的结论或已完成事项。</p>
-      <ol>{pack.d4ToD8Plan.map((item) => <li key={item.phase}><strong>{item.phase}</strong> <span className="evidence-tag evidence-tag--plan">计划中</span><p>{item.plan}</p></li>)}</ol>
+      <ol>
+        {pack.d4ToD8Plan.map((item) => (
+          <li className="cb-plan-item" key={item.phase}>
+            <span className="cb-plan-index" aria-hidden="true">{item.phase}</span>
+            <div>
+              <span className="cb-badge gray">计划中</span>
+              <p className="cb-muted">{item.plan}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
     </section>
   </article>
 }
