@@ -71,7 +71,7 @@ export function KnowledgeUploadForm({ api }: { api: { ingestKnowledge(input: Rec
       return
     }
     if (isServerParsed) {
-      setFileStatus(`${file.name}（${(file.size / 1024).toFixed(1)} KB）为 ${file.name.split('.').pop()?.toUpperCase()} 格式，需由部署后的服务端解析；当前演示与本地模式请使用 TXT/Markdown 或直接粘贴文本。`)
+      setFileStatus(`${file.name} 为 ${file.name.split('.').pop()?.toUpperCase()} 格式，需部署后由服务端解析。本地模式请粘贴文本或上传 TXT/Markdown。`)
       return
     }
     setFileStatus(`不支持 ${file.name} 的格式，请使用 TXT/Markdown 或直接粘贴文本。`)
@@ -125,27 +125,33 @@ export function KnowledgeUploadForm({ api }: { api: { ingestKnowledge(input: Rec
 
       <fieldset className="governance-fields">
         <legend>适用范围与权限（提交前必配）</legend>
-        <label htmlFor="knowledge-customers">适用客户（逗号分隔，可空表示不限）</label>
-        <input id="knowledge-customers" value={customers} onChange={(event) => setCustomers(event.target.value)} placeholder="例如：华东精工" />
-        <label htmlFor="knowledge-products">适用产品（逗号分隔，可空表示不限）</label>
-        <input id="knowledge-products" value={products} onChange={(event) => setProducts(event.target.value)} placeholder="例如：BR-2045" />
-        <label htmlFor="knowledge-factories">适用工厂（逗号分隔，可空表示不限）</label>
-        <input id="knowledge-factories" value={factories} onChange={(event) => setFactories(event.target.value)} placeholder="例如：杭州一厂" />
-        <label htmlFor="knowledge-visibility">可见角色</label>
-        <select id="knowledge-visibility" value={visibility} onChange={(event) => setVisibility(event.target.value as typeof visibility)}>
-          <option value="quality_team">质量团队</option>
-          <option value="quality_manager">质量经理</option>
-          <option value="knowledge_owner">知识负责人</option>
-        </select>
-        <label htmlFor="knowledge-effective">生效日期</label>
-        <input id="knowledge-effective" type="date" value={effectiveDate} onChange={(event) => setEffectiveDate(event.target.value)} />
-        <label htmlFor="knowledge-expires">失效日期（可选）</label>
-        <input id="knowledge-expires" type="date" value={expiresDate} onChange={(event) => setExpiresDate(event.target.value)} />
-        <label htmlFor="knowledge-confidentiality">保密级别</label>
-        <select id="knowledge-confidentiality" value={confidentiality} onChange={(event) => setConfidentiality(event.target.value as typeof confidentiality)}>
-          <option value="internal">内部</option>
-          <option value="confidential">机密</option>
-        </select>
+        <div className="knowledge-section">
+          <h3 className="knowledge-section__title">适用范围</h3>
+          <label htmlFor="knowledge-customers">适用客户（逗号分隔，可空表示不限）</label>
+          <input id="knowledge-customers" value={customers} onChange={(event) => setCustomers(event.target.value)} placeholder="例如：华东精工" />
+          <label htmlFor="knowledge-products">适用产品（逗号分隔，可空表示不限）</label>
+          <input id="knowledge-products" value={products} onChange={(event) => setProducts(event.target.value)} placeholder="例如：BR-2045" />
+          <label htmlFor="knowledge-factories">适用工厂（逗号分隔，可空表示不限）</label>
+          <input id="knowledge-factories" value={factories} onChange={(event) => setFactories(event.target.value)} placeholder="例如：杭州一厂" />
+        </div>
+        <div className="knowledge-section">
+          <h3 className="knowledge-section__title">权限与有效期</h3>
+          <label htmlFor="knowledge-visibility">可见角色</label>
+          <select id="knowledge-visibility" value={visibility} onChange={(event) => setVisibility(event.target.value as typeof visibility)}>
+            <option value="quality_team">质量团队</option>
+            <option value="quality_manager">质量经理</option>
+            <option value="knowledge_owner">知识负责人</option>
+          </select>
+          <label htmlFor="knowledge-effective">生效日期</label>
+          <input id="knowledge-effective" type="date" value={effectiveDate} onChange={(event) => setEffectiveDate(event.target.value)} />
+          <label htmlFor="knowledge-expires">失效日期（可选）</label>
+          <input id="knowledge-expires" type="date" value={expiresDate} onChange={(event) => setExpiresDate(event.target.value)} />
+          <label htmlFor="knowledge-confidentiality">保密级别</label>
+          <select id="knowledge-confidentiality" value={confidentiality} onChange={(event) => setConfidentiality(event.target.value as typeof confidentiality)}>
+            <option value="internal">内部</option>
+            <option value="confidential">机密</option>
+          </select>
+        </div>
       </fieldset>
 
       <button type="submit" disabled={submitting}>{submitting ? '正在生成…' : '生成待审核条目'}</button>

@@ -42,7 +42,7 @@ export function KnowledgeReviewPage({ api }: { api: { listPendingKnowledge(): Pr
     void review(item.id, 'rejected', reason)
   }
 
-  return <main className="page"><header><h1>知识审核</h1><p>发布前请核对来源、适用范围与有效期；只有审核通过的条目会进入正式问答。</p></header>{error && <p role="alert">{error}</p>}
+  return <main className="page page--wide"><header><h1>知识审核</h1><p>发布前请核对来源、适用范围与有效期；只有审核通过的条目会进入正式问答。</p></header>{error && <p role="alert">{error}</p>}
     <section className="panel" aria-labelledby="pending-heading"><h2 id="pending-heading">待审核条目</h2>{items.length === 0 ? <p>暂无待审核条目</p> : <ul className="review-list">{items.map((item) => <li key={item.id} className="review-card">
       <div className="review-card__head">
         <strong>{item.title}</strong>
@@ -57,18 +57,18 @@ export function KnowledgeReviewPage({ api }: { api: { listPendingKnowledge(): Pr
         <div><dt>有效期</dt><dd>{item.effectiveAt ? `${formatDateTime(item.effectiveAt)}${item.expiresAt ? ` 至 ${formatDateTime(item.expiresAt)}` : ' 起（长期）'}` : '未配置'}</dd></div>
         <div><dt>保密级别</dt><dd>{item.confidentiality === 'confidential' ? '机密' : item.confidentiality === 'internal' ? '内部' : '未配置'}</dd></div>
         {item.reviewedBy && <div><dt>审核人</dt><dd>{item.reviewedBy}{item.reviewedAt ? `（${formatDateTime(item.reviewedAt)}）` : ''}</dd></div>}
-        {item.rejectionReason && <div><dt>驳回原因</dt><dd>{item.rejectionReason}</dd></div>}
+        {item.rejectionReason && <div style={{ gridColumn: '1 / -1', padding: '.5rem .75rem', borderRadius: '6px', background: '#fff0d7' }}><dt>驳回原因</dt><dd>{item.rejectionReason}</dd></div>}
       </dl>
       <button className="secondary" onClick={() => void viewCitation(item.id)}>查看引用</button>
       {citations[item.id] && <KnowledgeCitation {...citations[item.id]} />}
       {item.status === 'pending_review' && <div className="review-actions">
         <label className="confirm-line"><input type="checkbox" checked={Boolean(confirmScope[item.id])} onChange={(event) => setConfirmScope((current) => ({ ...current, [item.id]: event.target.checked }))} /> 我确认该条目的适用范围与可见角色配置正确</label>
+        <label htmlFor={`reject-reason-${item.id}`}>驳回原因</label>
+        <textarea id={`reject-reason-${item.id}`} value={rejectReasons[item.id] ?? ''} onChange={(event) => setRejectReasons((current) => ({ ...current, [item.id]: event.target.value }))} rows={2} placeholder="填写驳回原因，回流到知识沉淀记录" />
         <div className="actions">
           <button onClick={() => publish(item)}>发布条目</button>
           <button className="secondary" onClick={() => reject(item)}>驳回条目</button>
         </div>
-        <label htmlFor={`reject-reason-${item.id}`}>驳回原因</label>
-        <textarea id={`reject-reason-${item.id}`} value={rejectReasons[item.id] ?? ''} onChange={(event) => setRejectReasons((current) => ({ ...current, [item.id]: event.target.value }))} rows={2} placeholder="填写驳回原因，回流到知识沉淀记录" />
       </div>}
     </li>)}</ul>}</section>
   </main>

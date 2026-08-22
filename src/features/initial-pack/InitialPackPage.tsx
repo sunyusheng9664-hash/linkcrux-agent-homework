@@ -108,13 +108,13 @@ export function InitialPackPage({
   }
 
   if (error) return <main className="page"><p role="alert">{error}</p></main>
-  if (!caseRecord || (caseRecord.initialPackStatus === 'generating' && !pollExhausted)) return <main className="page"><p>正在生成首次处理包…</p></main>
+  if (!caseRecord || (caseRecord.initialPackStatus === 'generating' && !pollExhausted)) return <main className="page"><div className="loading-state"><span className="spinner" aria-hidden="true" /><strong>正在生成首次处理包…</strong><p className="hint">Agent 正在整理客户回复、内部工单与 8D 初版</p></div></main>
   if (caseRecord.initialPackStatus === 'generating') {
     const leaseUntil = caseRecord.initialPackGeneration?.leaseUntil
     const leaseActive = Boolean(leaseUntil && Date.parse(leaseUntil) > now().getTime())
     return <main className="page">
       <h1>生成状态长时间未更新</h1>
-      <p>请先刷新状态；确认原生成任务已中断后，可显式恢复生成。</p>
+      <p>如原任务已中断，可点击下方按钮恢复生成。</p>
       {leaseUntil && <p>可恢复时间：<time dateTime={leaseUntil}>{leaseUntil}</time></p>}
       {recoveryNotice && <p role="alert">{recoveryNotice}</p>}
       <button type="button" onClick={() => void refreshStatus()}>刷新状态</button>
@@ -123,14 +123,14 @@ export function InitialPackPage({
   }
   if (caseRecord.initialPackStatus === 'manual_handoff') {
     return <main className="page">
-      <h1>首次处理包需要人工接管</h1>
+      <h1>首次处理包生成遇到异常，需要人工接管</h1>
       <p>原因：{failureReasonLabel(caseRecord.initialPackFailureReason)}</p>
-      <button type="button" disabled={retrying} onClick={() => void retry()}>{retrying ? '重试中…' : '人工确认后重试'}</button>
+      <button type="button" disabled={retrying} onClick={() => void retry()}>{retrying ? '重试中…' : '重新生成'}</button>
     </main>
   }
   if (!caseRecord.initialPack) return <main className="page"><p role="alert">首次处理包状态异常，请联系管理员。</p></main>
   const facts = { ...caseRecord.facts, ...caseRecord.analysis?.facts }
-  return <main className="page">
+  return <main className="page page--wide">
     <nav className="breadcrumb" aria-label="面包屑">
       <Link to="/">工作台</Link><span aria-hidden="true">/</span><span>案件 {formatCaseNumber(caseRecord.id)}</span><span aria-hidden="true">/</span><span aria-current="page">首次处理包</span>
     </nav>
@@ -155,6 +155,6 @@ function wait(milliseconds: number): Promise<void> {
 
 function failureReasonLabel(reason?: InitialPackFailureReason): string {
   if (reason === 'INITIAL_PACK_UNSAFE_D3') return 'D3 建议包含不允许的完成态或结论态'
-  if (reason === 'INITIAL_PACK_ASSEMBLY_FAILED') return '服务端处理包组装失败'
-  return '模型生成失败'
+  if (reason === 'INITIAL_PACK_ASSEMBLY_FAILED') return '处理包组装失败'
+  return '分析服务生成失败'
 }

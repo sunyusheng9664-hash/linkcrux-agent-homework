@@ -81,19 +81,19 @@ export function EightDInitialView({
       ...pack.d4ToD8Plan.map((item) => `- ${item.phase}：${item.plan}`),
       '',
     ].join('\n')
-    download(`8D-初版-${caseNumber ?? '未编号'}.md`, lines)
+    download(`8D-初版${caseNumber ? `-${caseNumber}` : ''}.md`, lines)
   }
 
   return <article>
     <header className="pack-header">
       <h1>8D 初版</h1>
-      <p>首次处理范围为 D1–D3；后续阶段均为待验证计划。</p>
+      <p>首次处理包 = 客户首响 + 内部工单 + 8D 初版（D1–D3）。</p>
       <div className="actions pack-actions">
+        {versionConfirmed
+          ? <span className="status-badge status-badge--success">✓ 质量经理已确认 v1</span>
+          : <button type="button" className="secondary" onClick={() => setVersionConfirmed(true)}>确认版本 v1</button>}
         <button type="button" className="secondary" onClick={() => void copy(reply)}>复制客户回复</button>
         <button type="button" className="secondary" onClick={exportPack}>导出 8D 初版</button>
-        <button type="button" className={versionConfirmed ? '' : 'secondary'} onClick={() => setVersionConfirmed((current) => !current)}>
-          {versionConfirmed ? '已确认版本 v1 · 质量经理' : '确认版本 v1'}
-        </button>
       </div>
     </header>
 
@@ -105,7 +105,7 @@ export function EightDInitialView({
       <div className="actions">
         <button type="button" className="secondary" onClick={() => void copy(reply)}>复制回复</button>
         <button type="button" className={replyConfirmed ? '' : 'secondary'} onClick={() => setReplyConfirmed((current) => !current)}>
-          {replyConfirmed ? '已确认待发送' : '标记为已确认待发送'}
+          {replyConfirmed ? '已确认待发送 ✓' : '确认并待发送'}
         </button>
       </div>
     </section>
@@ -127,14 +127,14 @@ export function EightDInitialView({
 
     <section className="panel" aria-labelledby="d3-heading">
       <h2 id="d3-heading">D3 临时遏制建议</h2>
-      <p className="hint">以下仅为 AI 建议，不能代表措施已经执行。接受或修改后，由质量经理确认执行并附证据。</p>
+      <p className="hint">以下仅为 Agent 建议，不能代表措施已经执行。接受或修改后，由质量经理确认执行并附证据。</p>
       <ul className="card-list">
         {pack.d3.containmentActions.map((action, index) => {
           const state = task(index)
           return <li key={`${action.suggestedAction}-${index}`} className="task-card">
             <div className="task-card__head">
               <strong>{action.suggestedAction}</strong>
-              <span className={`status-badge${state.executed ? ' status-badge--success' : ' status-badge--neutral'}`}>{state.executed ? '已执行' : state.decision ? '已接受待执行' : 'AI 建议 · 未执行'}</span>
+              <span className={`status-badge${state.executed ? ' status-badge--success' : ' status-badge--neutral'}`}>{state.executed ? '已执行' : state.decision ? '已接受待执行' : 'Agent 建议 · 未执行'}</span>
             </div>
             <div className="task-card__fields">
               <label>实际负责人<input aria-label={`负责人 ${index + 1}`} value={state.owner} onChange={(event) => updateTask(index, { owner: event.target.value })} /></label>
@@ -167,7 +167,7 @@ export function EightDInitialView({
             <strong>{TIMELINE_MILESTONE_LABELS[item.milestone as TimelineMilestone]}</strong>
             <span>{item.delivery}</span>
             {deadline && <span className="timeline__meta">截止 <time dateTime={deadline.toISOString()}>{formatDateTime(deadline)}</time></span>}
-            {status && <span className={`timeline__status${status.overdue ? ' timeline__status--overdue' : ''}`}>{status.label}</span>}
+            {status && <span className={`timeline__status${status.overdue ? ' timeline__status--overdue' : ''}`}>{status.overdue ? '⚠ ' : ''}{status.label}</span>}
           </li>
         })}
       </ol>
@@ -176,7 +176,7 @@ export function EightDInitialView({
     <section className="panel" aria-labelledby="follow-up-heading">
       <h2 id="follow-up-heading">D4–D8 后续计划</h2>
       <p className="hint">这些内容是下一阶段工作计划，不是已经核实的结论或已完成事项。</p>
-      <ol>{pack.d4ToD8Plan.map((item) => <li key={item.phase}><strong>{item.phase}</strong> <span className="evidence-tag evidence-tag--missing">计划中</span><p>{item.plan}</p></li>)}</ol>
+      <ol>{pack.d4ToD8Plan.map((item) => <li key={item.phase}><strong>{item.phase}</strong> <span className="evidence-tag evidence-tag--plan">计划中</span><p>{item.plan}</p></li>)}</ol>
     </section>
   </article>
 }

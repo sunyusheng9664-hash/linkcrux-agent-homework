@@ -1,10 +1,10 @@
 import type { CaseFactField, CaseRecord, CaseStatus, InitialPackStatus, ManagerDecision } from '../contracts/case'
 import type { KnowledgeVisibility } from '../contracts/knowledge'
 
-export const CASE_FLOW_STEPS = ['受理', 'Agent 分析', '人工判断', '首次处理包'] as const
+export const CASE_FLOW_STEPS = ['受理投诉', 'Agent 分析', '质量经理确认', '生成处理包'] as const
 
-/** 新建客诉向导的步骤文案（QCA-005：1.录入 → 2.Agent 分析 → 3.人工判断 → 4.首次处理包）。 */
-export const CASE_ENTRY_STEPS = ['录入', 'Agent 分析', '人工判断', '首次处理包'] as const
+/** 新建客诉向导的步骤文案（QCA-005：1.录入投诉 → 2.Agent 分析 → 3.质量经理确认 → 4.生成处理包）。 */
+export const CASE_ENTRY_STEPS = ['录入投诉', 'Agent 分析', '质量经理确认', '生成处理包'] as const
 
 const FACT_LABELS: Record<CaseFactField, string> = {
   customer: '客户',
@@ -96,6 +96,12 @@ export function formatDateTime(value: string | Date): string {
   const date = typeof value === 'string' ? new Date(value) : value
   if (Number.isNaN(date.getTime())) return String(value)
   return date.toLocaleString('zh-CN', { hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+}
+
+export function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
 }
 
 export function formatDuration(milliseconds: number): string {

@@ -60,7 +60,7 @@ export function ManagerDecisionForm({
     <p><EvidenceTag kind="confirmed" /> 以下结论由质量经理负责确认并留痕。</p>
 
     {requiresHuman && <div className="risk-banner risk-banner--locked" role="note" aria-label="高风险人工处理提示">
-      <strong>重大风险：必须由质量经理确认</strong>
+      <strong>已识别重大风险信号，需质量经理确认后方可推进</strong>
       {riskLabel && <p>{riskLabel}{riskEvidence ? `（证据：${riskEvidence}）` : ''}</p>}
       {slaSuggestion && <p>升级 SLA：{slaSuggestion}</p>}
     </div>}
@@ -78,6 +78,7 @@ export function ManagerDecisionForm({
               onChange={(event) => setOutcome(event.target.value as ManagerDecision['outcome'])}
             />
             <span><strong>{option.title}</strong><small>{option.description}</small></span>
+            {outcome === option.value && <span className="decision-card__check" aria-hidden="true">✓</span>}
           </label>
         ))}
       </fieldset>
@@ -100,17 +101,20 @@ export function ManagerDecisionForm({
         <option value="critical">严重</option>
       </select>
 
-      <label htmlFor="manager-start-8d">是否启动 8D</label>
-      <input id="manager-start-8d" type="checkbox" checked={start8d} onChange={(event) => {
-        setStart8d(event.target.checked)
-        if (event.target.checked !== initialStart8d) setOutcome('modified')
-      }} />
+      <label htmlFor="manager-start-8d" style={{ display: 'flex', alignItems: 'center', gap: '.5rem', cursor: 'pointer' }}>
+        <input id="manager-start-8d" type="checkbox" checked={start8d} onChange={(event) => {
+          setStart8d(event.target.checked)
+          if (event.target.checked !== initialStart8d) setOutcome('modified')
+        }} />
+        启动 8D 流程
+      </label>
+      <p className="hint">调整严重度或 8D 选项将自动标记为“修改 Agent 建议”。</p>
 
       {error && <p role="alert">{error}</p>}
 
       <div className="submit-bar submit-bar--sticky">
-        <p className="hint">提交后将生成客户首响、内部工单与 D1–D3 初版。</p>
-        <button type="submit" disabled={!outcome || submitting}>{submitting ? '正在生成…' : '确认并生成首次处理包'}</button>
+        <p className="hint">确认后将生成客户首响、内部工单和 8D 初版（D1–D3）。</p>
+        <button type="submit" disabled={!outcome || submitting}>{submitting ? '正在生成…' : '生成首次处理包'}</button>
       </div>
     </form>
   </section>

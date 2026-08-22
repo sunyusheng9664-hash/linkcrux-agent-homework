@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import type { CaseFactField, CaseRecord, ManagerDecision, RiskSignal } from '../../contracts/case'
-import { confidenceLevel, factLabel, formatCaseNumber } from '../../domain/presentation'
+import { confidenceLevel, factLabel, formatCaseNumber, formatFileSize } from '../../domain/presentation'
 import type { AgentApi } from '../../services/agentApi'
 import { EvidenceTag } from './EvidenceTag'
 import { ManagerDecisionForm } from './ManagerDecisionForm'
@@ -20,11 +20,11 @@ const FACT_LABELS: Record<CaseFactField, string> = {
 }
 
 const ANALYSIS_FAILURE_LABELS = {
-  MODEL_CONFIG_MISSING: '模型配置缺失',
-  MODEL_REQUEST_FAILED: '模型请求失败',
-  MODEL_RESPONSE_INVALID: '模型响应无效',
-  MODEL_SCHEMA_INVALID: '模型结构无效',
-  MODEL_UNAVAILABLE: '模型不可用',
+  MODEL_CONFIG_MISSING: '分析服务未配置',
+  MODEL_REQUEST_FAILED: '分析服务请求失败',
+  MODEL_RESPONSE_INVALID: '分析结果格式异常',
+  MODEL_SCHEMA_INVALID: '分析结果结构异常',
+  MODEL_UNAVAILABLE: '分析服务不可用',
 } as const
 
 export function AnalysisPage({ api }: { api: Pick<AgentApi, 'getCase' | 'analyzeCase' | 'confirmCase'> & Partial<Pick<AgentApi, 'listHandoffs' | 'answerKnowledge'>> }) {
@@ -55,7 +55,7 @@ export function AnalysisPage({ api }: { api: Pick<AgentApi, 'getCase' | 'analyze
   }, [api, id])
 
   if (error) return <main className="page"><p role="alert">{error}</p></main>
-  if (!caseRecord?.analysis) return <main className="page"><p>正在分析案件…</p></main>
+  if (!caseRecord?.analysis) return <main className="page"><div className="loading-state"><span className="spinner" aria-hidden="true" /><strong>正在分析案件…</strong><p className="hint">Agent 正在抽取事实、评估风险并生成建议</p></div></main>
 
   const analysis = caseRecord.analysis
   const facts = { ...caseRecord.facts, ...analysis.facts }
@@ -74,7 +74,7 @@ export function AnalysisPage({ api }: { api: Pick<AgentApi, 'getCase' | 'analyze
   const risk = analysis.riskSuggestion[0]
   const confidence = confidenceLevel(analysis.confidence)
 
-  return <main className="page analysis-page">
+  return <main className="page page--wide analysis-page">
     <nav className="breadcrumb" aria-label="面包屑">
       <Link to="/">工作台</Link><span aria-hidden="true">/</span><span>案件 {formatCaseNumber(caseRecord.id)}</span><span aria-hidden="true">/</span><span aria-current="page">案件分析</span>
     </nav>
@@ -83,9 +83,7 @@ export function AnalysisPage({ api }: { api: Pick<AgentApi, 'getCase' | 'analyze
     <section className="panel decision-summary" aria-labelledby="decision-summary-heading">
       <h2 id="decision-summary-heading">案件决策摘要</h2>
       <dl className="summary-grid">
-        <div><dt>风险等级</dt><dd>{risk
-          ? <span className="risk-level risk-level--danger">{risk.label}（必须人工处理）</span>
-          : <span className="risk-level">未识别到硬风险</span>}</dd></div>
+        {risk && <div className="summary-grid__risk"><dt>风险等级</dt><dd><span className="risk-level">{risk.label}，已触发人工复核</span></dd></div>}
         <div><dt>缺失信息</dt><dd>{analysis.missingFields.length > 0
           ? analysis.missingFields.map((field) => <span key={field} className="chip">{factLabel(field)}</span>)
           : '无'}</dd></div>
@@ -98,16 +96,18 @@ export function AnalysisPage({ api }: { api: Pick<AgentApi, 'getCase' | 'analyze
       <summary id="complaint-evidence-heading">投诉原文与附件<EvidenceTag kind="statement" /></summary>
       <p>{highlight ? <HighlightedText text={caseRecord.content} highlight={highlight} /> : caseRecord.content}</p>
       <h3><EvidenceTag kind="statement" /> 客户陈述（待核实）</h3>
-      <FactList facts={caseRecord.facts ?? {}} emptyText="暂无单独录入的结构化事实" />
+      <FactList facts={caseRecord.facts ?? {}} emptyText="暂无单独录入的结构化事实。可在下方投诉原文中高亮需要抽取的内容。" />
       <h3>附件</h3>
       {caseRecord.attachments.length > 0
-        ? <ul>{caseRecord.attachments.map((attachment) => <li key={attachment.fileId}><span>{attachment.originalName}</span>（{attachment.mimeType}，{attachment.size} bytes）</li>)}</ul>
+        ? <ul>{caseRecord.attachments.map((attachment) => <li key={attachment.fileId}><span>{attachment.originalName}</span> · {formatFileSize(attachment.size)}</li>)}</ul>
         : <p>无附件</p>}
     </details>
 
     <section className="panel" aria-labelledby="agent-analysis-heading">
       <h2 id="agent-analysis-heading">Agent 分析建议</h2>
-      <p>分析状态：{analysis.analysisStatus === 'manual_takeover' ? '人工接管' : 'AI 已完成'}</p>
+      {analysis.analysisStatus === 'manual_takeover'
+        ? <p className="risk-banner" role="note">当前案件触发高风险或敏感规则，已转质量经理人工处理。Agent 建议仅作参考。</p>
+        : <p>分析状态：Agent 已完成分析</p>}
       {analysis.analysisFailureReason && <p>失败原因：{ANALYSIS_FAILURE_LABELS[analysis.analysisFailureReason]}</p>}
       <h3><EvidenceTag kind="extracted" /> 结构化事实</h3>
       <FactList facts={analysis.facts} emptyText="Agent 未抽取到可溯源事实" />
@@ -116,7 +116,7 @@ export function AnalysisPage({ api }: { api: Pick<AgentApi, 'getCase' | 'analyze
         ? <ul className="chip-list">{analysis.missingFields.map((field) => <li key={field} className="chip">{FACT_LABELS[field]}</li>)}</ul>
         : <p>当前无缺失字段</p>}
       <h3><EvidenceTag kind="suggested" /> 风险与处理建议</h3>
-      <p>AI 置信度：{confidence.label}（依据 {analysis.evidenceSpans.length} 条证据片段）</p>
+      <p>分析置信度：{confidence.label}（依据 {analysis.evidenceSpans.length} 条证据片段）</p>
       <p>建议部门：{analysis.departmentSuggestion.join('、')}</p>
       <p>建议 SLA：{analysis.slaSuggestion}</p>
       <p>建议启动 8D：{analysis.start8dSuggestion ? '是' : '否'}</p>
@@ -128,7 +128,7 @@ export function AnalysisPage({ api }: { api: Pick<AgentApi, 'getCase' | 'analyze
         ? <ul className="evidence-list">{analysis.evidenceSpans.map((span, index) => <li key={`${span.field}-${index}`}>
           <span className="evidence-label">{factLabel(span.field as CaseFactField) || span.field}</span>
           <span className="evidence-text">“{span.text}”</span>
-          <button type="button" className="secondary small" onClick={() => locateInOriginal(span.text)}>定位到原文</button>
+          <button type="button" className="text-link" onClick={() => locateInOriginal(span.text)}>在原文中高亮</button>
         </li>)}</ul>
         : <p>暂无可引用证据片段</p>}
     </section>
